@@ -62,7 +62,7 @@
 			<lv_tabview-tab_bar height="48">
 				<style name="style_tabbar_bg" />
 			</lv_tabview-tab_bar>
-			<lv_tabview-tab text="Preparation">
+			<lv_tabview-tab text="Preparation" scrollable="false">
 				<lv_button name="button_2" height="48" y="380" width="120" x="10">
 					<lv_label name="label_2" align="center" text="Home vanne" />
 					<event_cb trigger="pressed" callback="mon_callback_1" />
@@ -109,7 +109,7 @@
 				</lv_scale>
 			</lv_tabview-tab>
 
-			<lv_tabview-tab text="Stats">
+			<lv_tabview-tab text="Stats" scrollable="false">
 				<lv_chart
 					width="582"
 					height="366"
@@ -133,7 +133,7 @@
 				</lv_chart>
 			</lv_tabview-tab>
 
-			<lv_tabview-tab text="About">
+			<lv_tabview-tab text="About" scrollable="false">
 				<lv_label text="Tab view organizes content into pages." width="100%">
 					<style name="style_card" />
 				</lv_label>

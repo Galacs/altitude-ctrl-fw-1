@@ -163,6 +163,7 @@ lv_obj_t * main_create(void)
         lv_obj_set_height(lv_tabview_tab_bar_0, 48);
         lv_obj_add_style(lv_tabview_tab_bar_0, &style_tabbar_bg, 0);
         lv_obj_t * lv_tabview_tab_0 = lv_tabview_add_tab(lv_tabview_0, "Preparation");
+        lv_obj_set_flag(lv_tabview_tab_0, LV_OBJ_FLAG_SCROLLABLE, false);
         lv_obj_t * button_2 = lv_button_create(lv_tabview_tab_0);
         lv_obj_set_name(button_2, "button_2");
         lv_obj_set_height(button_2, 48);
@@ -229,6 +230,7 @@ lv_obj_t * main_create(void)
         lv_scale_set_section_style_items(lv_scale_0, lv_scale_section_0, &style_danger_items);
 
         lv_obj_t * lv_tabview_tab_1 = lv_tabview_add_tab(lv_tabview_0, "Stats");
+        lv_obj_set_flag(lv_tabview_tab_1, LV_OBJ_FLAG_SCROLLABLE, false);
         lv_obj_t * lv_chart_0 = lv_chart_create(lv_tabview_tab_1);
         lv_obj_set_width(lv_chart_0, 582);
         lv_obj_set_height(lv_chart_0, 366);
@@ -251,6 +253,7 @@ lv_obj_t * main_create(void)
         lv_chart_set_cursor_pos_y(lv_chart_0, lv_chart_cursor_0, 70);
 
         lv_obj_t * lv_tabview_tab_2 = lv_tabview_add_tab(lv_tabview_0, "About");
+        lv_obj_set_flag(lv_tabview_tab_2, LV_OBJ_FLAG_SCROLLABLE, false);
         lv_obj_t * lv_label_0 = lv_label_create(lv_tabview_tab_2);
         lv_label_set_text(lv_label_0, "Tab view organizes content into pages.");
         lv_obj_set_width(lv_label_0, lv_pct(100));
