@@ -88,6 +88,9 @@ bool altitude_ctrl_ui_1_mini_check_target(uint32_t target);
  * Subjects
  *----------------*/
 
+extern lv_subject_t txt_btn_stepper_en;
+extern lv_subject_t valve_pose;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -97,6 +100,7 @@ bool altitude_ctrl_ui_1_mini_check_target(uint32_t target);
  *----------------*/
 
 void mon_callback_1(lv_event_t * e);
+void slider_update_callback(lv_event_t * e);
 
 /**
  * Initialize the component library

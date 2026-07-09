@@ -108,6 +108,7 @@ void init_lvgl(void) {
     // Reset the touch screen before usage
     DEV_I2C_Port port = DEV_I2C_Init();  // Initialize I2C port
     IO_EXTENSION_Init();  // Initialize the IO EXTENSION GPIO chip for backlight control
+    IO_EXTENSION_Output(IO_EXTENSION_IO_2, 0);  // Backlight ON configuration
     IO_EXTENSION_Output(IO_EXTENSION_IO_1, 0);  // Pull touch reset low
  
     vTaskDelay(pdMS_TO_TICKS(100));  // Wait for another 100ms
@@ -222,7 +223,6 @@ void init_lvgl(void) {
     //     esp_lv_adapter_unlock();
     // }
  
-    IO_EXTENSION_Output(IO_EXTENSION_IO_2, 1);  // Backlight ON configuration
 }
 
 static void add_data(lv_timer_t * t)
@@ -268,10 +268,17 @@ void lv_example_chart_8(void)
 
 void mon_callback_1(lv_event_t * e) {
     ESP_LOGW(TAG, "ca call");
+    lv_subject_copy_string(&txt_btn_stepper_en, "active");
+    lv_subject_set_int(&valve_pose, 80);
+}
+
+void slider_update_callback(lv_event_t * e) {
+    ESP_LOGW(TAG, "valeur updated");
 }
 
 void app_main(void) {
     init_lvgl();
+    altitude_ctrl_ui_1_mini_init("");
 
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         // lv_obj_t *label = lv_label_create(lv_scr_act());
@@ -280,7 +287,10 @@ void app_main(void) {
         lv_screen_load(main_create());
         esp_lv_adapter_unlock();
     }
-    
+ 
+
+    vTaskDelay(pdMS_TO_TICKS(500));
+    IO_EXTENSION_Output(IO_EXTENSION_IO_2, 1);  // Backlight ON configuration
     // printf("bonsoir\n");
     // can_manager_t can_mgr;
 

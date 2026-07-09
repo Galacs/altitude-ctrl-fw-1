@@ -13,6 +13,46 @@
 		/>
 
 		<style name="style_card" bg_color="0x1e293b" bg_opa="100%" radius="8" pad_all="12" text_color="0xe2e8f0" />
+		<style name="red_bg" bg_color="0xbb0d0d" />
+		<style
+			name="style_bar"
+			bg_color="0xdee2e7"
+			bg_opa="100%"
+			radius="8"
+			outline_width="1"
+			outline_color="0x3b82f6"
+			outline_opa="90%"
+		/>
+
+		<style name="style_bar_ind" bg_color="0x3b82f6" radius="6" />
+		<style
+			name="style_bar_knob"
+			bg_color="0x3b82f6"
+			radius="100"
+			pad_all="8"
+			border_color="0xfff"
+			border_width="2"
+			shadow_width="8"
+			shadow_offset_y="4"
+			shadow_opa="30%"
+		/>
+		<style
+			name="style_scale_main"
+			bg_color="0x0f172a"
+			bg_opa="100%"
+			pad_all="14"
+			arc_color="0x64748b"
+			line_color="0x64748b"
+			text_color="0xcbd5e1"
+		/>
+
+		<style name="style_scale_minor_ticks" line_color="0x64748b" length="6" />
+		<style name="style_scale_major_ticks" line_color="0x3577d3" line_width="3" length="10" />
+
+		<!-- Danger section styling -->
+		<style name="style_danger_line" line_color="0xef4444" arc_color="0xef4444" line_width="4" />
+		<style name="style_danger_ind" line_color="0xef4444" line_width="4" text_color="0xef4444" />
+		<style name="style_danger_items" line_color="0xf87171" line_width="3" />
 	</styles>
 
 	<view>
@@ -23,10 +63,50 @@
 				<style name="style_tabbar_bg" />
 			</lv_tabview-tab_bar>
 			<lv_tabview-tab text="Preparation">
-				<lv_button name="button_2" width="160" height="48" x="50" y="50">
+				<lv_button name="button_2" height="48" y="380" width="120" x="10">
 					<lv_label name="label_2" align="center" text="Home vanne" />
 					<event_cb trigger="pressed" callback="mon_callback_1" />
 				</lv_button>
+				<lv_button name="button_3" height="48" y="380" width="120" x="170">
+					<style name="red_bg" />
+					<lv_label name="label_3" align="center" recolor="false" bind_text="txt_btn_stepper_en" />
+				</lv_button>
+
+				<lv_slider width="15" height="250" orientation="vertical" value="65" y="50" x="140" ext_click_area="8">
+					<style name="style_bar" />
+					<style name="style_bar_ind" selector="indicator" />
+					<style name="style_bar_knob" selector="knob" />
+					<event_cb trigger="value_changed" callback="slider_update_callback" />
+				</lv_slider>
+				<lv_scale
+					height="100"
+					y="450"
+					mode="horizontal_bottom"
+					min_value="0"
+					max_value="100"
+					total_tick_count="21"
+					major_tick_every="5"
+					label_show="true"
+					style_radius="10"
+					style_transform_rotation-indicator="450"
+					style_pad_bottom-indicator="6"
+					x="0"
+					draw_ticks_on_top="false"
+					post_draw="false"
+					width="300"
+				>
+					<style name="style_scale_main" />
+					<style name="style_scale_minor_ticks" selector="items" />
+					<style name="style_scale_major_ticks" selector="indicator" />
+
+					<lv_scale-section
+						bind_max_value="valve_pose"
+						bind_min_value="valve_pose"
+						style_main="style_danger_line"
+						style_indicator="style_danger_ind"
+						style_items="style_danger_items"
+					/>
+				</lv_scale>
 			</lv_tabview-tab>
 
 			<lv_tabview-tab text="Stats">

@@ -73,6 +73,9 @@ static uint32_t altitude_ctrl_ui_1_mini_target = ALTITUDE_CTRL_UI_1_MINI_TARGET_
  * Subjects
  *----------------*/
 
+lv_subject_t txt_btn_stepper_en;
+lv_subject_t valve_pose;
+
 /**********************
  *      MACROS
  **********************/
@@ -106,6 +109,16 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     /*----------------
      * Subjects
      *----------------*/
+    static char txt_btn_stepper_en_buf[UI_SUBJECT_STRING_LENGTH];
+    static char txt_btn_stepper_en_prev_buf[UI_SUBJECT_STRING_LENGTH];
+    lv_subject_init_string(&txt_btn_stepper_en,
+                           txt_btn_stepper_en_buf,
+                           txt_btn_stepper_en_prev_buf,
+                           UI_SUBJECT_STRING_LENGTH,
+                           "desactive"
+                          );
+    lv_subject_init_int(&valve_pose, 50);
+
     /*----------------
      * Translations
      *----------------*/
@@ -122,9 +135,12 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     /* Register fonts */
 
     /* Register subjects */
+    lv_xml_register_subject(NULL, "txt_btn_stepper_en", &txt_btn_stepper_en);
+    lv_xml_register_subject(NULL, "valve_pose", &valve_pose);
 
     /* Register callbacks */
     lv_xml_register_event_cb(NULL, "mon_callback_1", mon_callback_1);
+    lv_xml_register_event_cb(NULL, "slider_update_callback", slider_update_callback);
 #endif
 
     /* Register all the global assets so that they won't be created again when globals.xml is parsed.
@@ -163,6 +179,11 @@ void __attribute__((weak)) mon_callback_1(lv_event_t * e)
 {
     LV_UNUSED(e);
     LV_LOG("mon_callback_1 was called\n");
+}
+void __attribute__((weak)) slider_update_callback(lv_event_t * e)
+{
+    LV_UNUSED(e);
+    LV_LOG("slider_update_callback was called\n");
 }
 #endif
 
