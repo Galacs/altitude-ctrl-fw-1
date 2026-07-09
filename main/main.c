@@ -280,18 +280,30 @@ void app_main(void) {
     init_lvgl();
     altitude_ctrl_ui_1_mini_init("");
 
+    lv_obj_t* parent = NULL;
+
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         // lv_obj_t *label = lv_label_create(lv_scr_act());
         // lv_example_chart_8();
         // lv_screen_load(screen_components_create());
-        lv_screen_load(main_create());
+        parent = main_create();
+        lv_screen_load(parent);
         esp_lv_adapter_unlock();
     }
- 
 
     vTaskDelay(pdMS_TO_TICKS(500));
     IO_EXTENSION_Output(IO_EXTENSION_IO_2, 1);  // Backlight ON configuration
     // printf("bonsoir\n");
+
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        lv_obj_t *chart = lv_obj_find_by_name(parent, "chart");
+        lv_chart_series_t *ser = lv_chart_get_series_next(chart, NULL);
+        lv_chart_set_next_value(chart, ser, 69);
+        ESP_LOGI(TAG, "added value to chart ser 1");
+        esp_lv_adapter_unlock();
+    }
+
+
     // can_manager_t can_mgr;
 
 
