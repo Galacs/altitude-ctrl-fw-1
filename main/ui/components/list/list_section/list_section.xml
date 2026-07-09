@@ -1,0 +1,16 @@
+<component>
+	<previews>
+		<preview name="default" width="320" />
+	</previews>
+
+	<api>
+		<prop name="text" type="string" default="Section" help="Section header text" />
+	</api>
+
+	<!-- A small, muted section header to group rows in a list. It is a plain
+	     label (inherits the theme text color, then dims it via opacity) with
+	     padding so it lines up with the rows above/below. -->
+	<view extends="lv_label" text="$text" width="100%"
+	      style_text_font="font_body" style_text_opa="50%"
+	      style_pad_hor="#space_md" style_pad_top="#space_md" style_pad_bottom="#space_xs" />
+</component>

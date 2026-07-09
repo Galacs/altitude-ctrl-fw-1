@@ -10,6 +10,13 @@
 #include "esp_lcd_touch_gt911.h"
 #include "io_extension.h"
 
+
+// #define LV_LVGL_H_INCLUDE_SIMPLE
+// #undef LV_USE_XML
+// #include "altitude_ctrl_ui_1.h"
+#include "ui/altitude_ctrl_ui_1.h"
+
+
 #define TAG "main"
 
 /**
@@ -206,18 +213,67 @@ void init_lvgl(void) {
  
     ESP_ERROR_CHECK(esp_lv_adapter_start());
  
-    if (esp_lv_adapter_lock(-1) == ESP_OK) {
-        lv_obj_t *label = lv_label_create(lv_scr_act());
-        lv_label_set_text(label, "Hello, Waveshare 7B!");
-        lv_obj_center(label);
-        esp_lv_adapter_unlock();
-    }
+    // if (esp_lv_adapter_lock(-1) == ESP_OK) {
+    //     lv_obj_t *label = lv_label_create(lv_scr_act());
+    //     lv_label_set_text(label, "Hello, Waveshare 7B!");
+    //     lv_obj_center(label);
+    //     esp_lv_adapter_unlock();
+    // }
  
     IO_EXTENSION_Output(IO_EXTENSION_IO_2, 1);  // Backlight ON configuration
 }
 
+static void add_data(lv_timer_t * t)
+{
+    lv_obj_t * chart = (lv_obj_t *)lv_timer_get_user_data(t);
+    lv_chart_series_t * ser = lv_chart_get_series_next(chart, NULL);
+
+    lv_chart_set_next_value(chart, ser, (int32_t)lv_rand(10, 90));
+
+    uint32_t p = lv_chart_get_point_count(chart);
+    uint32_t s = lv_chart_get_x_start_point(chart, ser);
+    int32_t * a = lv_chart_get_series_y_array(chart, ser);
+
+    a[(s + 1) % p] = LV_CHART_POINT_NONE;
+    a[(s + 2) % p] = LV_CHART_POINT_NONE;
+    a[(s + 2) % p] = LV_CHART_POINT_NONE;
+
+    lv_chart_refresh(chart);
+}
+
+/**
+ * Circular line chart with gap
+ */
+void lv_example_chart_8(void)
+{
+    /*Create a stacked_area_chart.obj*/
+    lv_obj_t * chart = lv_chart_create(lv_screen_active());
+    lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_CIRCULAR);
+    lv_obj_set_style_size(chart, 0, 0, LV_PART_INDICATOR);
+    lv_obj_set_size(chart, 500, 500);
+    lv_obj_center(chart);
+
+    lv_chart_set_point_count(chart, 80);
+    lv_chart_series_t * ser = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
+    /*Prefill with data*/
+    uint32_t i;
+    for(i = 0; i < 80; i++) {
+        lv_chart_set_next_value(chart, ser, (int32_t)lv_rand(10, 90));
+    }
+
+    lv_timer_create(add_data, 300, chart);
+}
+
 void app_main(void) {
     init_lvgl();
+
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        // lv_obj_t *label = lv_label_create(lv_scr_act());
+        // lv_example_chart_8();
+        lv_screen_load(screen_components_create());
+        esp_lv_adapter_unlock();
+    }
+    
     // printf("bonsoir\n");
     // can_manager_t can_mgr;
 
@@ -237,4 +293,8 @@ void app_main(void) {
     //     vTaskDelay(pdMS_TO_TICKS(10));
     // }
     printf("Hello world!\n");
+    while(1) {
+        lv_timer_handler();
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
 }
