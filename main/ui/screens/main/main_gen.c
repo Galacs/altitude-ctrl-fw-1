@@ -223,7 +223,7 @@ lv_obj_t * main_create(void)
         lv_obj_add_style(lv_scale_0, &style_scale_major_ticks, LV_PART_INDICATOR);
         lv_scale_section_t * lv_scale_section_0 = lv_scale_add_section(lv_scale_0);
         lv_scale_bind_section_max_value(lv_scale_0, lv_scale_section_0, &valve_pose);
-        lv_scale_bind_section_min_value(lv_scale_0, lv_scale_section_0, &valve_pose);
+        lv_scale_set_section_min_value(lv_scale_0, lv_scale_section_0, 0);
         lv_scale_set_section_style_main(lv_scale_0, lv_scale_section_0, &style_danger_line);
         lv_scale_set_section_style_indicator(lv_scale_0, lv_scale_section_0, &style_danger_ind);
         lv_scale_set_section_style_items(lv_scale_0, lv_scale_section_0, &style_danger_items);

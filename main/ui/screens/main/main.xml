@@ -101,7 +101,7 @@
 
 					<lv_scale-section
 						bind_max_value="valve_pose"
-						bind_min_value="valve_pose"
+						min_value="0"
 						style_main="style_danger_line"
 						style_indicator="style_danger_ind"
 						style_items="style_danger_items"
