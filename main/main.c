@@ -14,7 +14,8 @@
 // #define LV_LVGL_H_INCLUDE_SIMPLE
 // #undef LV_USE_XML
 // #include "altitude_ctrl_ui_1.h"
-#include "ui/altitude_ctrl_ui_1.h"
+// #include "ui/altitude_ctrl_ui_1.h"
+#include "ui/altitude_ctrl_ui_1_mini.h"
 
 
 #define TAG "main"
@@ -192,6 +193,7 @@ void init_lvgl(void) {
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));   // <-- was missing: panel never started
  
     esp_lv_adapter_config_t cfg = ESP_LV_ADAPTER_DEFAULT_CONFIG();
+    // cfg.task_stack_size= 16 * 1024;
     ESP_ERROR_CHECK(esp_lv_adapter_init(&cfg));
  
     // Step 2: Register a display (choose macro by interface)
@@ -264,13 +266,18 @@ void lv_example_chart_8(void)
     lv_timer_create(add_data, 300, chart);
 }
 
+void mon_callback_1(lv_event_t * e) {
+    ESP_LOGW(TAG, "ca call");
+}
+
 void app_main(void) {
     init_lvgl();
 
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         // lv_obj_t *label = lv_label_create(lv_scr_act());
         // lv_example_chart_8();
-        lv_screen_load(screen_components_create());
+        // lv_screen_load(screen_components_create());
+        lv_screen_load(main_create());
         esp_lv_adapter_unlock();
     }
     

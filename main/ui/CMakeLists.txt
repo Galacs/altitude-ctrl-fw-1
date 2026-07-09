@@ -2,9 +2,14 @@
 # This file is used to compile the UI Project created by the Editor.
 # See `user_config.cmake` as a way to add your own source files here
 # Only set project if this is the top-level CMakeLists.txt
-cmake_minimum_required(VERSION 3.10)
-project(LVGLProject)
-set(IS_TOP_LEVEL TRUE)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  cmake_minimum_required(VERSION 3.10)
+  # can be customized
+  project(LVGLProject)
+  set(IS_TOP_LEVEL TRUE)
+else()
+  set(IS_TOP_LEVEL FALSE)
+endif()
 # Handles giving component libraries unique names when included as subprojects.
 if(DEFINED LVGL_COMPONENT_LIB_NAME)
   set(LIB_NAME ${LVGL_COMPONENT_LIB_NAME})
