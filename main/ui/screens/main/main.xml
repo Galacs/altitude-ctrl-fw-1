@@ -119,6 +119,10 @@
 						style_items="style_danger_items"
 					/>
 				</lv_scale>
+
+				<button name="comp_btn" x="500">
+					<event_cb trigger="pressed" callback="from_comp_callback" />
+				</button>
 			</lv_tabview-tab>
 
 			<lv_tabview-tab text="Stats" scrollable="false">

@@ -260,6 +260,11 @@ lv_obj_t * main_create(void)
         lv_scale_set_section_style_indicator(lv_scale_0, lv_scale_section_0, &style_danger_ind);
         lv_scale_set_section_style_items(lv_scale_0, lv_scale_section_0, &style_danger_items);
 
+        lv_obj_t * comp_btn = button_create(lv_tabview_tab_0, "BTN", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 48, 120);
+        lv_obj_set_name(comp_btn, "comp_btn");
+        lv_obj_set_x(comp_btn, 500);
+        lv_obj_add_event_cb(comp_btn, from_comp_callback, LV_EVENT_PRESSED, NULL);
+
         lv_obj_t * lv_tabview_tab_1 = lv_tabview_add_tab(lv_tabview_0, "Stats");
         lv_obj_set_flag(lv_tabview_tab_1, LV_OBJ_FLAG_SCROLLABLE, false);
         lv_obj_t * lv_chart_0 = lv_chart_create(lv_tabview_tab_1);

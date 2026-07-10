@@ -86,6 +86,7 @@
 #define EXAMPLE_PIN_NUM_TOUCH_INT       (GPIO_NUM_4)    // Interrupt pin for the touch controller
 
 
+lv_obj_t* parent = NULL;
 
 // #include "can_manager.h"
 
@@ -259,11 +260,20 @@ void toggle_btn_callback(lv_event_t * e) {
     ESP_LOGW(TAG, "toggled");
 }
 
+void from_comp_callback(lv_event_t * e) {
+    ESP_LOGW(TAG, "from comp");
+    lv_obj_t *comp = lv_obj_find_by_name(parent, "comp_btn");
+    lv_obj_t *label = lv_obj_find_by_name(parent, "label");
+    if (label) {
+        ESP_LOGW(TAG, "found it");
+        lv_label_set_text(label, "test");
+    }
+}
+
 void app_main(void) {
     init_lvgl();
     altitude_ctrl_ui_1_mini_init("");
 
-    lv_obj_t* parent = NULL;
 
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         // lv_obj_t *label = lv_label_create(lv_scr_act());

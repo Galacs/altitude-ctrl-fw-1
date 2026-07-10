@@ -142,6 +142,7 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     lv_xml_register_event_cb(NULL, "toggle_btn_callback", toggle_btn_callback);
     lv_xml_register_event_cb(NULL, "mon_callback_1", mon_callback_1);
     lv_xml_register_event_cb(NULL, "slider_update_callback", slider_update_callback);
+    lv_xml_register_event_cb(NULL, "from_comp_callback", from_comp_callback);
 #endif
 
     /* Register all the global assets so that they won't be created again when globals.xml is parsed.
@@ -190,6 +191,11 @@ void __attribute__((weak)) slider_update_callback(lv_event_t * e)
 {
     LV_UNUSED(e);
     LV_LOG("slider_update_callback was called\n");
+}
+void __attribute__((weak)) from_comp_callback(lv_event_t * e)
+{
+    LV_UNUSED(e);
+    LV_LOG("from_comp_callback was called\n");
 }
 #endif
 
