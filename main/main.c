@@ -248,6 +248,9 @@ void mon_callback_1(lv_event_t * e) {
     ESP_LOGW(TAG, "ca call");
     lv_subject_copy_string(&txt_btn_stepper_en, "active");
     lv_subject_set_int(&valve_pose, 80);
+
+    lv_obj_t *slider = lv_obj_find_by_name(parent, "lv_slider_0");
+    lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, false);
 }
 
 void slider_update_callback(lv_event_t * e) {
@@ -258,6 +261,8 @@ void slider_update_callback(lv_event_t * e) {
 
 void toggle_btn_callback(lv_event_t * e) {
     ESP_LOGW(TAG, "toggled");
+    lv_obj_t *slider = lv_obj_find_by_name(parent, "lv_slider_0");
+    lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, true);
 }
 
 void from_comp_callback(lv_event_t * e) {
