@@ -99,6 +99,7 @@ extern lv_subject_t valve_pose;
  * Event Callbacks
  *----------------*/
 
+void toggle_btn_callback(lv_event_t * e);
 void mon_callback_1(lv_event_t * e);
 void slider_update_callback(lv_event_t * e);
 

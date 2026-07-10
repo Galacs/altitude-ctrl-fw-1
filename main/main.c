@@ -255,6 +255,10 @@ void slider_update_callback(lv_event_t * e) {
     ESP_LOGW(TAG, "valeur updated: %ld", (long)value);
 }
 
+void toggle_btn_callback(lv_event_t * e) {
+    ESP_LOGW(TAG, "toggled");
+}
+
 void app_main(void) {
     init_lvgl();
     altitude_ctrl_ui_1_mini_init("");

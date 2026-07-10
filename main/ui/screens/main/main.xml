@@ -53,16 +53,28 @@
 		<style name="style_danger_line" line_color="0xef4444" arc_color="0xef4444" line_width="4" />
 		<style name="style_danger_ind" line_color="0xef4444" line_width="4" text_color="0xef4444" />
 		<style name="style_danger_items" line_color="0xf87171" line_width="3" />
+		<style name="style_btn" bg_color="0x64748b" bg_opa="100%" radius="8" />
+		<style name="style_btn_on" bg_color="0x16a34a" />
+		<style name="style_label" text_color="0xffffff" />
 	</styles>
 
 	<view>
 		<!-- 💡 Switch tabs from the bar at the bottom. -->
-		<lv_tabview tab_bar_position="bottom" active="0" align="center">
+		<lv_tabview tab_bar_position="bottom" align="center" active="0">
 			<style name="style_tv" />
 			<lv_tabview-tab_bar height="48">
 				<style name="style_tabbar_bg" />
 			</lv_tabview-tab_bar>
 			<lv_tabview-tab text="Preparation" scrollable="false">
+				<lv_switch name="sw_1" orientation="auto" />
+				<lv_button name="btn_toggle" checkable="true" width="120" height="40" y="100">
+					<style name="style_btn" />
+					<style name="style_btn_on" selector="checked" />
+					<event_cb callback="toggle_btn_callback" trigger="value_changed" />
+					<lv_label bind_text="txt_btn_stepper_en">
+						<style name="style_label" />
+					</lv_label>
+				</lv_button>
 				<lv_button name="button_2" height="48" y="380" width="120" x="10">
 					<lv_label name="label_2" align="center" text="Home vanne" />
 					<event_cb trigger="pressed" callback="mon_callback_1" />

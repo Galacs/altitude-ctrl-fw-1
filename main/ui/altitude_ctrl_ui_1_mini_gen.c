@@ -139,6 +139,7 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     lv_xml_register_subject(NULL, "valve_pose", &valve_pose);
 
     /* Register callbacks */
+    lv_xml_register_event_cb(NULL, "toggle_btn_callback", toggle_btn_callback);
     lv_xml_register_event_cb(NULL, "mon_callback_1", mon_callback_1);
     lv_xml_register_event_cb(NULL, "slider_update_callback", slider_update_callback);
 #endif
@@ -175,6 +176,11 @@ bool altitude_ctrl_ui_1_mini_check_target(uint32_t target)
 
 /* Callbacks */
 #if defined(LV_EDITOR_PREVIEW)
+void __attribute__((weak)) toggle_btn_callback(lv_event_t * e)
+{
+    LV_UNUSED(e);
+    LV_LOG("toggle_btn_callback was called\n");
+}
 void __attribute__((weak)) mon_callback_1(lv_event_t * e)
 {
     LV_UNUSED(e);

@@ -49,6 +49,9 @@ lv_obj_t * main_create(void)
     static lv_style_t style_danger_line;
     static lv_style_t style_danger_ind;
     static lv_style_t style_danger_items;
+    static lv_style_t style_btn;
+    static lv_style_t style_btn_on;
+    static lv_style_t style_label;
 
     static bool style_inited = false;
 
@@ -141,6 +144,17 @@ lv_obj_t * main_create(void)
             lv_style_set_line_color(&style_danger_items, lv_color_hex(0xf87171));
             lv_style_set_line_width(&style_danger_items, 3);
 
+            lv_style_init(&style_btn);
+            lv_style_set_bg_color(&style_btn, lv_color_hex(0x64748b));
+            lv_style_set_bg_opa(&style_btn, (255 * 100 / 100));
+            lv_style_set_radius(&style_btn, 8);
+
+            lv_style_init(&style_btn_on);
+            lv_style_set_bg_color(&style_btn_on, lv_color_hex(0x16a34a));
+
+            lv_style_init(&style_label);
+            lv_style_set_text_color(&style_label, lv_color_hex(0xffffff));
+
         }
         #endif
         style_inited = true;
@@ -156,14 +170,31 @@ lv_obj_t * main_create(void)
 
         lv_obj_t * lv_tabview_0 = lv_tabview_create(lv_obj_0);
         lv_tabview_set_tab_bar_position(lv_tabview_0, LV_DIR_BOTTOM);
-        lv_tabview_set_active(lv_tabview_0, 0, false);
         lv_obj_set_align(lv_tabview_0, LV_ALIGN_CENTER);
+        lv_tabview_set_active(lv_tabview_0, 0, false);
         lv_obj_add_style(lv_tabview_0, &style_tv, 0);
         lv_obj_t * lv_tabview_tab_bar_0 = lv_tabview_get_tab_bar(lv_tabview_0);
         lv_obj_set_height(lv_tabview_tab_bar_0, 48);
         lv_obj_add_style(lv_tabview_tab_bar_0, &style_tabbar_bg, 0);
         lv_obj_t * lv_tabview_tab_0 = lv_tabview_add_tab(lv_tabview_0, "Preparation");
         lv_obj_set_flag(lv_tabview_tab_0, LV_OBJ_FLAG_SCROLLABLE, false);
+        lv_obj_t * sw_1 = lv_switch_create(lv_tabview_tab_0);
+        lv_obj_set_name(sw_1, "sw_1");
+        lv_switch_set_orientation(sw_1, LV_SWITCH_ORIENTATION_AUTO);
+
+        lv_obj_t * btn_toggle = lv_button_create(lv_tabview_tab_0);
+        lv_obj_set_name(btn_toggle, "btn_toggle");
+        lv_obj_set_flag(btn_toggle, LV_OBJ_FLAG_CHECKABLE, true);
+        lv_obj_set_width(btn_toggle, 120);
+        lv_obj_set_height(btn_toggle, 40);
+        lv_obj_set_y(btn_toggle, 100);
+        lv_obj_add_style(btn_toggle, &style_btn, 0);
+        lv_obj_add_style(btn_toggle, &style_btn_on, LV_STATE_CHECKED);
+        lv_obj_add_event_cb(btn_toggle, toggle_btn_callback, LV_EVENT_VALUE_CHANGED, NULL);
+        lv_obj_t * lv_label_0 = lv_label_create(btn_toggle);
+        lv_label_bind_text(lv_label_0, &txt_btn_stepper_en, NULL);
+        lv_obj_add_style(lv_label_0, &style_label, 0);
+
         lv_obj_t * button_2 = lv_button_create(lv_tabview_tab_0);
         lv_obj_set_name(button_2, "button_2");
         lv_obj_set_height(button_2, 48);
@@ -254,10 +285,10 @@ lv_obj_t * main_create(void)
 
         lv_obj_t * lv_tabview_tab_2 = lv_tabview_add_tab(lv_tabview_0, "About");
         lv_obj_set_flag(lv_tabview_tab_2, LV_OBJ_FLAG_SCROLLABLE, false);
-        lv_obj_t * lv_label_0 = lv_label_create(lv_tabview_tab_2);
-        lv_label_set_text(lv_label_0, "Tab view organizes content into pages.");
-        lv_obj_set_width(lv_label_0, lv_pct(100));
-        lv_obj_add_style(lv_label_0, &style_card, 0);
+        lv_obj_t * lv_label_1 = lv_label_create(lv_tabview_tab_2);
+        lv_label_set_text(lv_label_1, "Tab view organizes content into pages.");
+        lv_obj_set_width(lv_label_1, lv_pct(100));
+        lv_obj_add_style(lv_label_1, &style_card, 0);
 
         lv_obj_t * lv_tabview_tab_bar_1 = lv_tabview_get_tab_bar(lv_tabview_0);
         lv_obj_set_height(lv_tabview_tab_bar_1, 48);
