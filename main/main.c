@@ -243,29 +243,6 @@ static void add_data(lv_timer_t * t)
     lv_chart_refresh(chart);
 }
 
-/**
- * Circular line chart with gap
- */
-void lv_example_chart_8(void)
-{
-    /*Create a stacked_area_chart.obj*/
-    lv_obj_t * chart = lv_chart_create(lv_screen_active());
-    lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_CIRCULAR);
-    lv_obj_set_style_size(chart, 0, 0, LV_PART_INDICATOR);
-    lv_obj_set_size(chart, 500, 500);
-    lv_obj_center(chart);
-
-    lv_chart_set_point_count(chart, 80);
-    lv_chart_series_t * ser = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
-    /*Prefill with data*/
-    uint32_t i;
-    for(i = 0; i < 80; i++) {
-        lv_chart_set_next_value(chart, ser, (int32_t)lv_rand(10, 90));
-    }
-
-    lv_timer_create(add_data, 300, chart);
-}
-
 void mon_callback_1(lv_event_t * e) {
     ESP_LOGW(TAG, "ca call");
     lv_subject_copy_string(&txt_btn_stepper_en, "active");
@@ -273,7 +250,9 @@ void mon_callback_1(lv_event_t * e) {
 }
 
 void slider_update_callback(lv_event_t * e) {
-    ESP_LOGW(TAG, "valeur updated");
+    lv_obj_t * slider = lv_event_get_target(e);
+    int32_t value = lv_slider_get_value(slider);
+    ESP_LOGW(TAG, "valeur updated: %ld", (long)value);
 }
 
 void app_main(void) {
@@ -296,10 +275,13 @@ void app_main(void) {
     // printf("bonsoir\n");
 
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
-        lv_obj_t *chart = lv_obj_find_by_name(parent, "chart");
+        lv_obj_t *chart = lv_obj_find_by_name(parent, "lv_chart_0");
         lv_chart_series_t *ser = lv_chart_get_series_next(chart, NULL);
         lv_chart_set_next_value(chart, ser, 69);
-        ESP_LOGI(TAG, "added value to chart ser 1");
+        lv_chart_set_next_value(chart, ser, 69);
+        lv_chart_set_next_value(chart, ser, 69);
+        lv_chart_set_next_value(chart, ser, 69);
+        ESP_LOGW(TAG, "added value to chart ser 1");
         esp_lv_adapter_unlock();
     }
 
