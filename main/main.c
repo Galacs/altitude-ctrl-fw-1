@@ -245,7 +245,10 @@ void mon_callback_1(lv_event_t * e) {
     ESP_LOGW(TAG, "ca call");
     // lv_subject_copy_string(&txt_btn_stepper_en, "active");
 
-    lv_obj_t *slider = lv_obj_find_by_name(parent, "lv_slider_0");
+    lv_obj_t * home_btn = lv_obj_find_by_name(parent, "valve_home_btn");
+    lv_obj_set_style_bg_color(home_btn, lv_color_hex(0x22c55e), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_t * valve_auto_btn = lv_obj_find_by_name(parent, "valve_auto_btn");
+    lv_obj_set_state(valve_auto_btn, LV_STATE_CHECKED, false);
     // lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, false);
 }
 
