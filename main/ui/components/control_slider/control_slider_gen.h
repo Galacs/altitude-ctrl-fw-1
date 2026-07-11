@@ -36,7 +36,7 @@ extern "C" {
  * GLOBAL PROTOTYPES
  **********************/
 
-lv_obj_t * control_slider_create(lv_obj_t * parent, lv_subject_t * bind_value, const char * on_change, int32_t min, int32_t max, int32_t width, int32_t height);
+lv_obj_t * control_slider_create(lv_obj_t * parent, lv_subject_t * bind_value, int32_t min, int32_t max, int32_t width, int32_t height);
 
 /**********************
  *      MACROS

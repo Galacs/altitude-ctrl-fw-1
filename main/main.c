@@ -146,10 +146,7 @@ void init_lvgl(void) {
  
     esp_lcd_panel_handle_t panel_handle = NULL;
  
-    // Pick tearing mode + rotation, then ask the adapter how many panel
-    // frame buffers that combination needs (this must happen before
-    // creating the esp_lcd panel, since num_fbs feeds panel_config).
-    const esp_lv_adapter_tear_avoid_mode_t tear_mode = ESP_LV_ADAPTER_TEAR_AVOID_MODE_DEFAULT_RGB;
+    const esp_lv_adapter_tear_avoid_mode_t tear_mode = ESP_LV_ADAPTER_TEAR_AVOID_MODE_TRIPLE_PARTIAL;
     const esp_lv_adapter_rotation_t rotation = ESP_LV_ADAPTER_ROTATE_0;
     uint8_t num_fbs = esp_lv_adapter_get_required_frame_buffer_count(tear_mode, rotation);
  
@@ -276,6 +273,9 @@ void from_comp_callback(lv_event_t * e) {
 }
 
 void app_main(void) {
+    ESP_LOGW(TAG, "%d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+    ESP_LOGW(TAG, "%d", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    ESP_LOGW(TAG, "%d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     init_lvgl();
     altitude_ctrl_ui_1_mini_init("");
 
@@ -324,7 +324,7 @@ void app_main(void) {
     // }
     printf("Hello world!\n");
     while(1) {
-        lv_timer_handler();
+        // lv_timer_handler();
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
