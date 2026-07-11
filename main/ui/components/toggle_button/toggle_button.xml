@@ -15,7 +15,7 @@
 		<style name="style_label" text_color="0xffffff" />
 	</styles>
 
-	<view extends="lv_button" checkable="true" width="$width" height="$height">
+	<view name="button" extends="lv_button" checkable="true" width="$width" height="$height">
 		<style name="style_btn" />
 		<style name="style_btn_on" selector="checked" />
 		<lv_label name="label" text="$text" align="center">

@@ -11,8 +11,9 @@
 		<prop name="width" type="int" default="120" />
 	</api>
 
-	<styles />
-
+	<styles>
+		<style name="style_homed" bg_color="0x22c55e" />
+	</styles>
 	<view
 		extends="lv_button"
 		style_bg_color="$color"
@@ -21,6 +22,7 @@
 		height="$height"
 		width="$width"
 	>
+		<style name="style_homed" selector="user_1" />
 		<lv_label name="label" align="center" recolor="false" text="$text" />
 	</view>
 </component>

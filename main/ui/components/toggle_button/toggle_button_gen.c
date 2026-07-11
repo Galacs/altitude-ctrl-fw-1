@@ -64,21 +64,22 @@ lv_obj_t * toggle_button_create(lv_obj_t * parent, const char * text, int32_t wi
 
     #if ALTITUDE_CTRL_UI_1_MINI_CHECK_COMPILE_TARGET(ALTITUDE_CTRL_UI_1_MINI_TARGET_ALL)
     if (altitude_ctrl_ui_1_mini_check_target(ALTITUDE_CTRL_UI_1_MINI_TARGET_ALL)) {
-        lv_obj_t * lv_button_0 = lv_button_create(parent);
-        lv_obj_set_name_static(lv_button_0, "toggle_button_#");
-        lv_obj_set_flag(lv_button_0, LV_OBJ_FLAG_CHECKABLE, true);
-        lv_obj_set_width(lv_button_0, width);
-        lv_obj_set_height(lv_button_0, height);
+        lv_obj_t * button = lv_button_create(parent);
+        lv_obj_set_name_static(button, "toggle_button_#");
+        lv_obj_set_name(button, "button");
+        lv_obj_set_flag(button, LV_OBJ_FLAG_CHECKABLE, true);
+        lv_obj_set_width(button, width);
+        lv_obj_set_height(button, height);
 
-        lv_obj_add_style(lv_button_0, &style_btn, 0);
-        lv_obj_add_style(lv_button_0, &style_btn_on, LV_STATE_CHECKED);
-        lv_obj_t * label = lv_label_create(lv_button_0);
+        lv_obj_add_style(button, &style_btn, 0);
+        lv_obj_add_style(button, &style_btn_on, LV_STATE_CHECKED);
+        lv_obj_t * label = lv_label_create(button);
         lv_obj_set_name(label, "label");
         lv_label_set_text(label, text);
         lv_obj_set_align(label, LV_ALIGN_CENTER);
         lv_obj_add_style(label, &style_label, 0);
 
-        the_root = lv_button_0;
+        the_root = button;
     }
     #endif
 

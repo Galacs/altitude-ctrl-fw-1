@@ -34,6 +34,21 @@ lv_obj_t * button_create(lv_obj_t * parent, const char * text, lv_color_t color,
 {
     LV_TRACE_OBJ_CREATE("begin");
 
+    static lv_style_t style_homed;
+
+    static bool style_inited = false;
+
+    if (!style_inited) {
+        #if ALTITUDE_CTRL_UI_1_MINI_CHECK_COMPILE_TARGET(ALTITUDE_CTRL_UI_1_MINI_TARGET_ALL)
+        if (altitude_ctrl_ui_1_mini_check_target(ALTITUDE_CTRL_UI_1_MINI_TARGET_ALL)) {
+            lv_style_init(&style_homed);
+            lv_style_set_bg_color(&style_homed, lv_color_hex(0x22c55e));
+
+        }
+        #endif
+        style_inited = true;
+    }
+
 
     lv_obj_t * the_root = NULL;
 
@@ -47,6 +62,7 @@ lv_obj_t * button_create(lv_obj_t * parent, const char * text, lv_color_t color,
         lv_obj_set_height(button, height);
         lv_obj_set_width(button, width);
 
+        lv_obj_add_style(button, &style_homed, LV_STATE_USER_1);
         lv_obj_t * label = lv_label_create(button);
         lv_obj_set_name(label, "label");
         lv_obj_set_align(label, LV_ALIGN_CENTER);
