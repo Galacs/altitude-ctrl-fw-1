@@ -39,19 +39,7 @@ lv_obj_t * main_create(void)
     static lv_style_t style_tabbar_btn;
     static lv_style_t style_tabbar_btn_checked;
     static lv_style_t style_card;
-    static lv_style_t red_bg;
-    static lv_style_t style_bar;
-    static lv_style_t style_bar_ind;
-    static lv_style_t style_bar_knob;
-    static lv_style_t style_scale_main;
-    static lv_style_t style_scale_minor_ticks;
-    static lv_style_t style_scale_major_ticks;
-    static lv_style_t style_danger_line;
-    static lv_style_t style_danger_ind;
-    static lv_style_t style_danger_items;
-    static lv_style_t style_btn;
-    static lv_style_t style_btn_on;
-    static lv_style_t style_label;
+    static lv_style_t style_card_title;
 
     static bool style_inited = false;
 
@@ -84,76 +72,14 @@ lv_obj_t * main_create(void)
             lv_style_init(&style_card);
             lv_style_set_bg_color(&style_card, lv_color_hex(0x1e293b));
             lv_style_set_bg_opa(&style_card, (255 * 100 / 100));
-            lv_style_set_radius(&style_card, 8);
-            lv_style_set_pad_all(&style_card, 12);
-            lv_style_set_text_color(&style_card, lv_color_hex(0xe2e8f0));
+            lv_style_set_radius(&style_card, 12);
+            lv_style_set_pad_all(&style_card, 20);
+            lv_style_set_border_width(&style_card, 0);
 
-            lv_style_init(&red_bg);
-            lv_style_set_bg_color(&red_bg, lv_color_hex(0xbb0d0d));
-
-            lv_style_init(&style_bar);
-            lv_style_set_bg_color(&style_bar, lv_color_hex(0xdee2e7));
-            lv_style_set_bg_opa(&style_bar, (255 * 100 / 100));
-            lv_style_set_radius(&style_bar, 8);
-            lv_style_set_outline_width(&style_bar, 1);
-            lv_style_set_outline_color(&style_bar, lv_color_hex(0x3b82f6));
-            lv_style_set_outline_opa(&style_bar, (255 * 90 / 100));
-
-            lv_style_init(&style_bar_ind);
-            lv_style_set_bg_color(&style_bar_ind, lv_color_hex(0x3b82f6));
-            lv_style_set_radius(&style_bar_ind, 6);
-
-            lv_style_init(&style_bar_knob);
-            lv_style_set_bg_color(&style_bar_knob, lv_color_hex(0x3b82f6));
-            lv_style_set_radius(&style_bar_knob, 100);
-            lv_style_set_pad_all(&style_bar_knob, 8);
-            lv_style_set_border_color(&style_bar_knob, lv_color_hex3(0xfff));
-            lv_style_set_border_width(&style_bar_knob, 2);
-            lv_style_set_shadow_width(&style_bar_knob, 8);
-            lv_style_set_shadow_offset_y(&style_bar_knob, 4);
-            lv_style_set_shadow_opa(&style_bar_knob, (255 * 30 / 100));
-
-            lv_style_init(&style_scale_main);
-            lv_style_set_bg_color(&style_scale_main, lv_color_hex(0x0f172a));
-            lv_style_set_bg_opa(&style_scale_main, (255 * 100 / 100));
-            lv_style_set_pad_all(&style_scale_main, 14);
-            lv_style_set_arc_color(&style_scale_main, lv_color_hex(0x64748b));
-            lv_style_set_line_color(&style_scale_main, lv_color_hex(0x64748b));
-            lv_style_set_text_color(&style_scale_main, lv_color_hex(0xcbd5e1));
-
-            lv_style_init(&style_scale_minor_ticks);
-            lv_style_set_line_color(&style_scale_minor_ticks, lv_color_hex(0x64748b));
-            lv_style_set_length(&style_scale_minor_ticks, 6);
-
-            lv_style_init(&style_scale_major_ticks);
-            lv_style_set_line_color(&style_scale_major_ticks, lv_color_hex(0x3577d3));
-            lv_style_set_line_width(&style_scale_major_ticks, 3);
-            lv_style_set_length(&style_scale_major_ticks, 10);
-
-            lv_style_init(&style_danger_line);
-            lv_style_set_line_color(&style_danger_line, lv_color_hex(0xef4444));
-            lv_style_set_arc_color(&style_danger_line, lv_color_hex(0xef4444));
-            lv_style_set_line_width(&style_danger_line, 4);
-
-            lv_style_init(&style_danger_ind);
-            lv_style_set_line_color(&style_danger_ind, lv_color_hex(0xef4444));
-            lv_style_set_line_width(&style_danger_ind, 4);
-            lv_style_set_text_color(&style_danger_ind, lv_color_hex(0xef4444));
-
-            lv_style_init(&style_danger_items);
-            lv_style_set_line_color(&style_danger_items, lv_color_hex(0xf87171));
-            lv_style_set_line_width(&style_danger_items, 3);
-
-            lv_style_init(&style_btn);
-            lv_style_set_bg_color(&style_btn, lv_color_hex(0x64748b));
-            lv_style_set_bg_opa(&style_btn, (255 * 100 / 100));
-            lv_style_set_radius(&style_btn, 8);
-
-            lv_style_init(&style_btn_on);
-            lv_style_set_bg_color(&style_btn_on, lv_color_hex(0x16a34a));
-
-            lv_style_init(&style_label);
-            lv_style_set_text_color(&style_label, lv_color_hex(0xffffff));
+            lv_style_init(&style_card_title);
+            lv_style_set_text_color(&style_card_title, lv_color_hex(0x94a3b8));
+            lv_style_set_text_letter_space(&style_card_title, 1);
+            lv_style_set_pad_bottom(&style_card_title, 4);
 
         }
         #endif
@@ -178,92 +104,42 @@ lv_obj_t * main_create(void)
         lv_obj_add_style(lv_tabview_tab_bar_0, &style_tabbar_bg, 0);
         lv_obj_t * lv_tabview_tab_0 = lv_tabview_add_tab(lv_tabview_0, "Preparation");
         lv_obj_set_flag(lv_tabview_tab_0, LV_OBJ_FLAG_SCROLLABLE, false);
-        lv_obj_t * sw_1 = lv_switch_create(lv_tabview_tab_0);
-        lv_obj_set_name(sw_1, "sw_1");
-        lv_switch_set_orientation(sw_1, LV_SWITCH_ORIENTATION_AUTO);
+        lv_obj_t * lv_obj_1 = lv_obj_create(lv_tabview_tab_0);
+        lv_obj_set_width(lv_obj_1, 300);
+        lv_obj_set_height(lv_obj_1, 515);
+        lv_obj_add_style(lv_obj_1, &style_card, 0);
+        lv_obj_t * lv_label_0 = lv_label_create(lv_obj_1);
+        lv_label_set_text(lv_label_0, "Controle Valve");
+        lv_obj_add_style(lv_label_0, &style_card_title, 0);
 
-        lv_obj_t * btn_toggle = lv_button_create(lv_tabview_tab_0);
-        lv_obj_set_name(btn_toggle, "btn_toggle");
-        lv_obj_set_flag(btn_toggle, LV_OBJ_FLAG_CHECKABLE, true);
-        lv_obj_set_width(btn_toggle, 120);
-        lv_obj_set_height(btn_toggle, 40);
-        lv_obj_set_y(btn_toggle, 100);
-        lv_obj_add_style(btn_toggle, &style_btn, 0);
-        lv_obj_add_style(btn_toggle, &style_btn_on, LV_STATE_CHECKED);
-        lv_obj_add_event_cb(btn_toggle, toggle_btn_callback, LV_EVENT_VALUE_CHANGED, NULL);
-        lv_obj_t * lv_label_0 = lv_label_create(btn_toggle);
-        lv_label_bind_text(lv_label_0, &txt_btn_stepper_en, NULL);
-        lv_obj_add_style(lv_label_0, &style_label, 0);
+        lv_obj_t * valve_auto_btn = toggle_button_create(lv_tabview_tab_0, "", 80, 80);
+        lv_obj_set_name(valve_auto_btn, "valve_auto_btn");
+        lv_obj_set_y(valve_auto_btn, 75);
+        lv_obj_set_x(valve_auto_btn, 30);
+        lv_obj_add_event_cb(valve_auto_btn, mon_callback_1, LV_EVENT_PRESSED, NULL);
 
-        lv_obj_t * button_2 = lv_button_create(lv_tabview_tab_0);
-        lv_obj_set_name(button_2, "button_2");
-        lv_obj_set_height(button_2, 48);
-        lv_obj_set_y(button_2, 380);
-        lv_obj_set_width(button_2, 120);
-        lv_obj_set_x(button_2, 10);
-        lv_obj_t * label_2 = lv_label_create(button_2);
-        lv_obj_set_name(label_2, "label_2");
-        lv_obj_set_align(label_2, LV_ALIGN_CENTER);
-        lv_label_set_text(label_2, "Home vanne");
+        lv_obj_t * valve_home_btn = button_create(lv_tabview_tab_0, "", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 80, 80);
+        lv_obj_set_name(valve_home_btn, "valve_home_btn");
+        lv_obj_set_y(valve_home_btn, 205);
+        lv_obj_set_x(valve_home_btn, 30);
+        lv_obj_add_event_cb(valve_home_btn, mon_callback_1, LV_EVENT_PRESSED, NULL);
 
-        lv_obj_add_event_cb(button_2, mon_callback_1, LV_EVENT_PRESSED, NULL);
+        lv_obj_t * valve_en_btn = toggle_button_create(lv_tabview_tab_0, "", 80, 80);
+        lv_obj_set_name(valve_en_btn, "valve_en_btn");
+        lv_obj_set_y(valve_en_btn, 335);
+        lv_obj_set_x(valve_en_btn, 30);
+        lv_obj_add_event_cb(valve_en_btn, mon_callback_1, LV_EVENT_PRESSED, NULL);
 
-        lv_obj_t * button_3 = lv_button_create(lv_tabview_tab_0);
-        lv_obj_set_name(button_3, "button_3");
-        lv_obj_set_height(button_3, 48);
-        lv_obj_set_y(button_3, 380);
-        lv_obj_set_width(button_3, 120);
-        lv_obj_set_x(button_3, 170);
-        lv_obj_add_style(button_3, &red_bg, 0);
-        lv_obj_t * label_3 = lv_label_create(button_3);
-        lv_obj_set_name(label_3, "label_3");
-        lv_obj_set_align(label_3, LV_ALIGN_CENTER);
-        lv_label_set_recolor(label_3, false);
-        lv_label_bind_text(label_3, &txt_btn_stepper_en, NULL);
+        lv_obj_t * valve_slider = control_slider_create(lv_tabview_tab_0, &valve_target, 0, 100, 80, 350);
+        lv_obj_set_name(valve_slider, "valve_slider");
+        lv_obj_set_y(valve_slider, 70);
+        lv_obj_set_x(valve_slider, 160);
+        lv_obj_add_event_cb(valve_slider, slider_update_callback, LV_EVENT_VALUE_CHANGED, NULL);
 
-        lv_obj_t * lv_slider_0 = lv_slider_create(lv_tabview_tab_0);
-        lv_obj_set_width(lv_slider_0, 15);
-        lv_obj_set_height(lv_slider_0, 250);
-        lv_slider_set_orientation(lv_slider_0, LV_SLIDER_ORIENTATION_VERTICAL);
-        lv_slider_set_value(lv_slider_0, 65, false);
-        lv_obj_set_y(lv_slider_0, 50);
-        lv_obj_set_x(lv_slider_0, 140);
-        lv_obj_set_ext_click_area(lv_slider_0, 8);
-        lv_obj_add_style(lv_slider_0, &style_bar, 0);
-        lv_obj_add_style(lv_slider_0, &style_bar_ind, LV_PART_INDICATOR);
-        lv_obj_add_style(lv_slider_0, &style_bar_knob, LV_PART_KNOB);
-        lv_obj_add_event_cb(lv_slider_0, slider_update_callback, LV_EVENT_VALUE_CHANGED, NULL);
-
-        lv_obj_t * lv_scale_0 = lv_scale_create(lv_tabview_tab_0);
-        lv_obj_set_height(lv_scale_0, 100);
-        lv_obj_set_y(lv_scale_0, 450);
-        lv_scale_set_mode(lv_scale_0, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
-        lv_scale_set_min_value(lv_scale_0, 0);
-        lv_scale_set_max_value(lv_scale_0, 100);
-        lv_scale_set_total_tick_count(lv_scale_0, 21);
-        lv_scale_set_major_tick_every(lv_scale_0, 5);
-        lv_scale_set_label_show(lv_scale_0, true);
-        lv_obj_set_style_radius(lv_scale_0, 10, 0);
-        lv_obj_set_style_transform_rotation(lv_scale_0, 450, LV_PART_INDICATOR);
-        lv_obj_set_style_pad_bottom(lv_scale_0, 6, LV_PART_INDICATOR);
-        lv_obj_set_x(lv_scale_0, 0);
-        lv_scale_set_draw_ticks_on_top(lv_scale_0, false);
-        lv_scale_set_post_draw(lv_scale_0, false);
-        lv_obj_set_width(lv_scale_0, 300);
-        lv_obj_add_style(lv_scale_0, &style_scale_main, 0);
-        lv_obj_add_style(lv_scale_0, &style_scale_minor_ticks, LV_PART_ITEMS);
-        lv_obj_add_style(lv_scale_0, &style_scale_major_ticks, LV_PART_INDICATOR);
-        lv_scale_section_t * lv_scale_section_0 = lv_scale_add_section(lv_scale_0);
-        lv_scale_bind_section_max_value(lv_scale_0, lv_scale_section_0, &valve_pose);
-        lv_scale_set_section_min_value(lv_scale_0, lv_scale_section_0, 0);
-        lv_scale_set_section_style_main(lv_scale_0, lv_scale_section_0, &style_danger_line);
-        lv_scale_set_section_style_indicator(lv_scale_0, lv_scale_section_0, &style_danger_ind);
-        lv_scale_set_section_style_items(lv_scale_0, lv_scale_section_0, &style_danger_items);
-
-        lv_obj_t * comp_btn = button_create(lv_tabview_tab_0, "BTN", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 48, 120);
-        lv_obj_set_name(comp_btn, "comp_btn");
-        lv_obj_set_x(comp_btn, 500);
-        lv_obj_add_event_cb(comp_btn, from_comp_callback, LV_EVENT_PRESSED, NULL);
+        lv_obj_t * valve_position_scale = position_scale_create(lv_tabview_tab_0, &valve_pose, 250, 65, 0, 100);
+        lv_obj_set_name(valve_position_scale, "valve_position_scale");
+        lv_obj_set_x(valve_position_scale, 25);
+        lv_obj_set_y(valve_position_scale, 435);
 
         lv_obj_t * lv_tabview_tab_1 = lv_tabview_add_tab(lv_tabview_0, "Stats");
         lv_obj_set_flag(lv_tabview_tab_1, LV_OBJ_FLAG_SCROLLABLE, false);

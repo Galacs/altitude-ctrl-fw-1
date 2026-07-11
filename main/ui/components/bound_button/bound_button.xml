@@ -1,0 +1,18 @@
+<component>
+	<previews>
+		<preview width="1024" height="600" style_bg_color="0x000000" />
+	</previews>
+
+	<api>
+		<prop name="text_subject" type="subject" />
+		<prop name="color" type="color" default="0xbb0d0d" />
+		<prop name="height" type="int" default="48" />
+		<prop name="width" type="int" default="120" />
+	</api>
+
+	<styles />
+
+	<view extends="lv_button" style_bg_color="$color" name="button" height="$height" width="$width">
+		<lv_label name="label" align="center" recolor="false" bind_text="$text_subject" />
+	</view>
+</component>

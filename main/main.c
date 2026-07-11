@@ -246,33 +246,33 @@ static void add_data(lv_timer_t * t)
 
 void mon_callback_1(lv_event_t * e) {
     ESP_LOGW(TAG, "ca call");
-    lv_subject_copy_string(&txt_btn_stepper_en, "active");
-    lv_subject_set_int(&valve_pose, 80);
+    // lv_subject_copy_string(&txt_btn_stepper_en, "active");
 
     lv_obj_t *slider = lv_obj_find_by_name(parent, "lv_slider_0");
-    lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, false);
+    // lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, false);
 }
 
 void slider_update_callback(lv_event_t * e) {
     lv_obj_t * slider = lv_event_get_target(e);
     int32_t value = lv_slider_get_value(slider);
+    lv_subject_set_int(&valve_pose, value);
     ESP_LOGW(TAG, "valeur updated: %ld", (long)value);
 }
 
 void toggle_btn_callback(lv_event_t * e) {
     ESP_LOGW(TAG, "toggled");
     lv_obj_t *slider = lv_obj_find_by_name(parent, "lv_slider_0");
-    lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, true);
+    // lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, true);
 }
 
 void from_comp_callback(lv_event_t * e) {
     ESP_LOGW(TAG, "from comp");
-    lv_obj_t *comp = lv_obj_find_by_name(parent, "comp_btn");
-    lv_obj_t *label = lv_obj_find_by_name(parent, "label");
-    if (label) {
-        ESP_LOGW(TAG, "found it");
-        lv_label_set_text(label, "test");
-    }
+    // lv_obj_t *comp = lv_obj_find_by_name(parent, "comp_btn");
+    // lv_obj_t *label = lv_obj_find_by_name(parent, "label");
+    // if (label) {
+    //     ESP_LOGW(TAG, "found it");
+    //     lv_label_set_text(label, "test");
+    // }
 }
 
 void app_main(void) {

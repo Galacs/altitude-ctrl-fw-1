@@ -12,8 +12,9 @@
 	</styles>
 
 	<subjects>
-		<string name="txt_btn_stepper_en" value="desactive" />
+		<string name="txt_btn_stepper_en" value="&#xF015;" />
 		<int name="valve_pose" value="50" />
+		<int name="valve_target" value="50" />
 		<!-- Add <int>, <string>, or <float> subjects here -->
 	</subjects>
 

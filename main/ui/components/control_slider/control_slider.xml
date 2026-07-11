@@ -1,0 +1,47 @@
+<component>
+	<previews>
+		<preview width="200" height="300" style_bg_color="0x0f172a" />
+	</previews>
+
+	<api>
+		<prop name="bind_value" type="subject" />
+		<prop name="min" type="int" default="0" />
+		<prop name="max" type="int" default="100" />
+		<prop name="width" type="int" default="80" />
+		<prop name="height" type="int" default="250" />
+	</api>
+
+	<styles>
+		<style name="style_bar" bg_color="0x334155" bg_opa="100%" radius="20" />
+		<style name="style_bar_ind" bg_color="0x3b82f6" radius="20" />
+		<style
+			name="style_bar_knob"
+			bg_color="0xffffff"
+			bg_opa="100%"
+			radius="999"
+			border_width="0"
+			pad_left="-10"
+			pad_right="-10"
+			pad_top="-60"
+			pad_bottom="-10"
+			shadow_width="6"
+			shadow_offset_y="2"
+			shadow_opa="25%"
+		/>
+	</styles>
+
+	<view
+		extends="lv_slider"
+		orientation="vertical"
+		bind_value="$bind_value"
+		min_value="$min"
+		max_value="$max"
+		width="$width"
+		height="$height"
+		ext_click_area="8"
+	>
+		<style name="style_bar" />
+		<style name="style_bar_ind" selector="indicator" />
+		<style name="style_bar_knob" selector="knob" />
+	</view>
+</component>

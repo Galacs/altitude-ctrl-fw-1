@@ -75,6 +75,7 @@ static uint32_t altitude_ctrl_ui_1_mini_target = ALTITUDE_CTRL_UI_1_MINI_TARGET_
 
 lv_subject_t txt_btn_stepper_en;
 lv_subject_t valve_pose;
+lv_subject_t valve_target;
 
 /**********************
  *      MACROS
@@ -115,9 +116,10 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
                            txt_btn_stepper_en_buf,
                            txt_btn_stepper_en_prev_buf,
                            UI_SUBJECT_STRING_LENGTH,
-                           "desactive"
+                           ""
                           );
     lv_subject_init_int(&valve_pose, 50);
+    lv_subject_init_int(&valve_target, 50);
 
     /*----------------
      * Translations
@@ -137,12 +139,11 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     /* Register subjects */
     lv_xml_register_subject(NULL, "txt_btn_stepper_en", &txt_btn_stepper_en);
     lv_xml_register_subject(NULL, "valve_pose", &valve_pose);
+    lv_xml_register_subject(NULL, "valve_target", &valve_target);
 
     /* Register callbacks */
-    lv_xml_register_event_cb(NULL, "toggle_btn_callback", toggle_btn_callback);
     lv_xml_register_event_cb(NULL, "mon_callback_1", mon_callback_1);
     lv_xml_register_event_cb(NULL, "slider_update_callback", slider_update_callback);
-    lv_xml_register_event_cb(NULL, "from_comp_callback", from_comp_callback);
 #endif
 
     /* Register all the global assets so that they won't be created again when globals.xml is parsed.
@@ -177,11 +178,6 @@ bool altitude_ctrl_ui_1_mini_check_target(uint32_t target)
 
 /* Callbacks */
 #if defined(LV_EDITOR_PREVIEW)
-void __attribute__((weak)) toggle_btn_callback(lv_event_t * e)
-{
-    LV_UNUSED(e);
-    LV_LOG("toggle_btn_callback was called\n");
-}
 void __attribute__((weak)) mon_callback_1(lv_event_t * e)
 {
     LV_UNUSED(e);
@@ -191,11 +187,6 @@ void __attribute__((weak)) slider_update_callback(lv_event_t * e)
 {
     LV_UNUSED(e);
     LV_LOG("slider_update_callback was called\n");
-}
-void __attribute__((weak)) from_comp_callback(lv_event_t * e)
-{
-    LV_UNUSED(e);
-    LV_LOG("from_comp_callback was called\n");
 }
 #endif
 

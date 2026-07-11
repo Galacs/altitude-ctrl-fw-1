@@ -1,0 +1,25 @@
+<component>
+	<previews>
+		<preview width="1024" height="600" style_bg_color="0x000000" />
+	</previews>
+
+	<api>
+		<prop name="text" type="string" default="Bouton" />
+		<prop name="width" type="int" default="120" />
+		<prop name="height" type="int" default="48" />
+	</api>
+
+	<styles>
+		<style name="style_btn" bg_color="0x64748b" bg_opa="100%" radius="8" />
+		<style name="style_btn_on" bg_color="0x16a34a" />
+		<style name="style_label" text_color="0xffffff" />
+	</styles>
+
+	<view extends="lv_button" checkable="true" width="$width" height="$height">
+		<style name="style_btn" />
+		<style name="style_btn_on" selector="checked" />
+		<lv_label name="label" text="$text" align="center">
+			<style name="style_label" />
+		</lv_label>
+	</view>
+</component>

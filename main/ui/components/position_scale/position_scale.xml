@@ -1,0 +1,65 @@
+<component>
+	<previews>
+		<preview width="400" height="150" style_bg_color="0x0f172a" />
+	</previews>
+
+	<!--
+		Read-only position indicator. The filled red section grows from 0
+		up to value_subject's current value, e.g. 0-100% actuator position.
+		Not interactive - this only displays measured/actual state.
+	-->
+	<api>
+		<prop name="value_subject" type="subject" />
+		<prop name="width" type="int" default="300" />
+		<prop name="height" type="int" default="100" />
+		<prop name="min" type="int" default="0" />
+		<prop name="max" type="int" default="100" />
+	</api>
+
+	<styles>
+		<style
+			name="style_scale_main"
+			bg_color="0x0f172a"
+			bg_opa="100%"
+			pad_all="14"
+			arc_color="0x64748b"
+			line_color="0x64748b"
+			text_color="0xcbd5e1"
+		/>
+		<style name="style_scale_minor_ticks" line_color="0x64748b" length="6" />
+		<style name="style_scale_major_ticks" line_color="0x3577d3" line_width="3" length="10" />
+
+		<style name="style_position_line" line_color="0xef4444" arc_color="0xef4444" line_width="4" />
+		<style name="style_position_ind" line_color="0xef4444" line_width="4" text_color="0xef4444" />
+		<style name="style_position_items" line_color="0xf87171" line_width="3" />
+	</styles>
+
+	<view
+		extends="lv_scale"
+		mode="horizontal_bottom"
+		min_value="$min"
+		max_value="$max"
+		total_tick_count="21"
+		major_tick_every="5"
+		label_show="true"
+		width="$width"
+		height="$height"
+		style_radius="10"
+		style_transform_rotation-indicator="450"
+		style_pad_bottom-indicator="6"
+		draw_ticks_on_top="false"
+		post_draw="false"
+	>
+		<style name="style_scale_main" />
+		<style name="style_scale_minor_ticks" selector="items" />
+		<style name="style_scale_major_ticks" selector="indicator" />
+
+		<lv_scale-section
+			bind_max_value="$value_subject"
+			min_value="$min"
+			style_main="style_position_line"
+			style_indicator="style_position_ind"
+			style_items="style_position_items"
+		/>
+	</view>
+</component>

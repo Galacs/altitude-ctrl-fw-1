@@ -90,6 +90,7 @@ bool altitude_ctrl_ui_1_mini_check_target(uint32_t target);
 
 extern lv_subject_t txt_btn_stepper_en;
 extern lv_subject_t valve_pose;
+extern lv_subject_t valve_target;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -99,10 +100,8 @@ extern lv_subject_t valve_pose;
  * Event Callbacks
  *----------------*/
 
-void toggle_btn_callback(lv_event_t * e);
 void mon_callback_1(lv_event_t * e);
 void slider_update_callback(lv_event_t * e);
-void from_comp_callback(lv_event_t * e);
 
 /**
  * Initialize the component library
@@ -119,7 +118,11 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path);
  **********************/
 
 /*Include all the widgets, components and screens of this library*/
+#include "components/bound_button/bound_button_gen.h"
 #include "components/button/button_gen.h"
+#include "components/control_slider/control_slider_gen.h"
+#include "components/position_scale/position_scale_gen.h"
+#include "components/toggle_button/toggle_button_gen.h"
 #include "screens/main/main_gen.h"
 
 #ifdef __cplusplus

@@ -3,5 +3,9 @@ list(
   LV_EDITOR_PROJECT_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/altitude_ctrl_ui_1_mini_gen.c
   ${CMAKE_CURRENT_LIST_DIR}/altitude_ctrl_ui_1_mini.c
+  ${CMAKE_CURRENT_LIST_DIR}/components/bound_button/bound_button_gen.c
   ${CMAKE_CURRENT_LIST_DIR}/components/button/button_gen.c
+  ${CMAKE_CURRENT_LIST_DIR}/components/control_slider/control_slider_gen.c
+  ${CMAKE_CURRENT_LIST_DIR}/components/position_scale/position_scale_gen.c
+  ${CMAKE_CURRENT_LIST_DIR}/components/toggle_button/toggle_button_gen.c
   ${CMAKE_CURRENT_LIST_DIR}/screens/main/main_gen.c)
