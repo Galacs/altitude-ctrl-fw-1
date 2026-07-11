@@ -14,6 +14,8 @@
 
 		<style name="style_card" bg_color="0x1e293b" bg_opa="100%" radius="12" pad_all="20" border_width="0" />
 		<style name="style_card_title" text_color="0x94a3b8" text_letter_space="1" pad_bottom="4" />
+		<style name="style_pump_value" text_color="0x60a5fa" />
+		<style name="style_pump_off" text_color="0x64748b" />
 	</styles>
 
 	<view>
@@ -47,10 +49,61 @@
 				<position_scale
 					name="valve_position_scale"
 					x="25"
-					height="65"
+					height="40"
 					value_subject="valve_pose"
-					y="435"
+					y="450"
 					width="250"
+					label_show="false"
+				/>
+
+				<!-- Vacuum pump section -->
+				<lv_obj x="320" y="0" width="380" height="515">
+					<style name="style_card" />
+					<lv_label text="Pompe a vide">
+						<style name="style_card_title" />
+					</lv_label>
+				</lv_obj>
+
+				<!-- Enable / disable pump (manual mode only) -->
+				<toggle_button name="pump_en_btn" y="75" x="345" height="90" width="90" text="&#xF011;">
+					<event_cb trigger="pressed" callback="pump_enable_callback" />
+				</toggle_button>
+
+				<!-- Current pressure readout -->
+				<lv_label text="CURRENT PRESSURE" x="460" y="80">
+					<style name="style_card_title" />
+				</lv_label>
+				<lv_label name="pump_pressure_value" x="460" y="100" width="220" bind_text="pump_pressure_text">
+					<style name="style_pump_value" />
+				</lv_label>
+
+				<!-- Target pressure setpoint (tap to open numeric keypad) -->
+				<lv_label text="TARGET PRESSURE" x="345" y="195">
+					<style name="style_card_title" />
+				</lv_label>
+				<bound_button
+					name="pump_target_btn"
+					x="345"
+					y="217"
+					width="180"
+					height="56"
+					color="0x334155"
+					text_subject="pump_target_text"
+				>
+					<event_cb trigger="clicked" callback="pump_target_keypad_open" />
+				</bound_button>
+
+				<!-- Current pressure vs. full 0-101.3 kPa chamber range -->
+				<position_scale
+					name="pump_pressure_scale"
+					x="345"
+					y="435"
+					height="60"
+					width="340"
+					min="0"
+					max="10"
+					value_subject="pump_pressure"
+					major_tick_every="2"
 				/>
 			</lv_tabview-tab>
 

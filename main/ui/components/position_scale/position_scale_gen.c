@@ -98,7 +98,6 @@ lv_obj_t * position_scale_create(lv_obj_t * parent, lv_subject_t * value_subject
         lv_obj_set_width(lv_scale_0, width);
         lv_obj_set_height(lv_scale_0, height);
         lv_obj_set_style_radius(lv_scale_0, 10, 0);
-        lv_obj_set_style_transform_rotation(lv_scale_0, 450, LV_PART_INDICATOR);
         lv_obj_set_style_pad_bottom(lv_scale_0, 6, LV_PART_INDICATOR);
         lv_scale_set_draw_ticks_on_top(lv_scale_0, false);
         lv_scale_set_post_draw(lv_scale_0, false);

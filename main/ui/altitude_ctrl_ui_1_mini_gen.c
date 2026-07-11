@@ -76,6 +76,9 @@ static uint32_t altitude_ctrl_ui_1_mini_target = ALTITUDE_CTRL_UI_1_MINI_TARGET_
 lv_subject_t txt_btn_stepper_en;
 lv_subject_t valve_pose;
 lv_subject_t valve_target;
+lv_subject_t pump_target_text;
+lv_subject_t pump_pressure;
+lv_subject_t pump_pressure_text;
 
 /**********************
  *      MACROS
@@ -120,6 +123,30 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
                           );
     lv_subject_init_int(&valve_pose, 50);
     lv_subject_init_int(&valve_target, 50);
+    static char pump_target_text_buf[UI_SUBJECT_STRING_LENGTH];
+    static char pump_target_text_prev_buf[UI_SUBJECT_STRING_LENGTH];
+    lv_subject_init_string(&pump_target_text,
+                           pump_target_text_buf,
+                           pump_target_text_prev_buf,
+                           UI_SUBJECT_STRING_LENGTH,
+                           "cible"
+                          );
+    static char pump_pressure_buf[UI_SUBJECT_STRING_LENGTH];
+    static char pump_pressure_prev_buf[UI_SUBJECT_STRING_LENGTH];
+    lv_subject_init_string(&pump_pressure,
+                           pump_pressure_buf,
+                           pump_pressure_prev_buf,
+                           UI_SUBJECT_STRING_LENGTH,
+                           "50"
+                          );
+    static char pump_pressure_text_buf[UI_SUBJECT_STRING_LENGTH];
+    static char pump_pressure_text_prev_buf[UI_SUBJECT_STRING_LENGTH];
+    lv_subject_init_string(&pump_pressure_text,
+                           pump_pressure_text_buf,
+                           pump_pressure_text_prev_buf,
+                           UI_SUBJECT_STRING_LENGTH,
+                           "pression"
+                          );
 
     /*----------------
      * Translations
@@ -140,10 +167,15 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     lv_xml_register_subject(NULL, "txt_btn_stepper_en", &txt_btn_stepper_en);
     lv_xml_register_subject(NULL, "valve_pose", &valve_pose);
     lv_xml_register_subject(NULL, "valve_target", &valve_target);
+    lv_xml_register_subject(NULL, "pump_target_text", &pump_target_text);
+    lv_xml_register_subject(NULL, "pump_pressure", &pump_pressure);
+    lv_xml_register_subject(NULL, "pump_pressure_text", &pump_pressure_text);
 
     /* Register callbacks */
     lv_xml_register_event_cb(NULL, "mon_callback_1", mon_callback_1);
     lv_xml_register_event_cb(NULL, "slider_update_callback", slider_update_callback);
+    lv_xml_register_event_cb(NULL, "pump_enable_callback", pump_enable_callback);
+    lv_xml_register_event_cb(NULL, "pump_target_keypad_open", pump_target_keypad_open);
 #endif
 
     /* Register all the global assets so that they won't be created again when globals.xml is parsed.
@@ -187,6 +219,16 @@ void __attribute__((weak)) slider_update_callback(lv_event_t * e)
 {
     LV_UNUSED(e);
     LV_LOG("slider_update_callback was called\n");
+}
+void __attribute__((weak)) pump_enable_callback(lv_event_t * e)
+{
+    LV_UNUSED(e);
+    LV_LOG("pump_enable_callback was called\n");
+}
+void __attribute__((weak)) pump_target_keypad_open(lv_event_t * e)
+{
+    LV_UNUSED(e);
+    LV_LOG("pump_target_keypad_open was called\n");
 }
 #endif
 

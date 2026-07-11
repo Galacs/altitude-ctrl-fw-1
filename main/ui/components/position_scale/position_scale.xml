@@ -45,7 +45,6 @@
 		width="$width"
 		height="$height"
 		style_radius="10"
-		style_transform_rotation-indicator="450"
 		style_pad_bottom-indicator="6"
 		draw_ticks_on_top="false"
 		post_draw="false"

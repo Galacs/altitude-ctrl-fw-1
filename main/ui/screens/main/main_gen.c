@@ -40,6 +40,8 @@ lv_obj_t * main_create(void)
     static lv_style_t style_tabbar_btn_checked;
     static lv_style_t style_card;
     static lv_style_t style_card_title;
+    static lv_style_t style_pump_value;
+    static lv_style_t style_pump_off;
 
     static bool style_inited = false;
 
@@ -80,6 +82,12 @@ lv_obj_t * main_create(void)
             lv_style_set_text_color(&style_card_title, lv_color_hex(0x94a3b8));
             lv_style_set_text_letter_space(&style_card_title, 1);
             lv_style_set_pad_bottom(&style_card_title, 4);
+
+            lv_style_init(&style_pump_value);
+            lv_style_set_text_color(&style_pump_value, lv_color_hex(0x60a5fa));
+
+            lv_style_init(&style_pump_off);
+            lv_style_set_text_color(&style_pump_off, lv_color_hex(0x64748b));
 
         }
         #endif
@@ -136,10 +144,59 @@ lv_obj_t * main_create(void)
         lv_obj_set_x(valve_slider, 160);
         lv_obj_add_event_cb(valve_slider, slider_update_callback, LV_EVENT_VALUE_CHANGED, NULL);
 
-        lv_obj_t * valve_position_scale = position_scale_create(lv_tabview_tab_0, &valve_pose, 250, 65, 0, 100);
+        lv_obj_t * valve_position_scale = position_scale_create(lv_tabview_tab_0, &valve_pose, 250, 40, 0, 100);
         lv_obj_set_name(valve_position_scale, "valve_position_scale");
         lv_obj_set_x(valve_position_scale, 25);
-        lv_obj_set_y(valve_position_scale, 435);
+        lv_obj_set_y(valve_position_scale, 450);
+        lv_scale_set_label_show(valve_position_scale, false);
+
+        lv_obj_t * lv_obj_2 = lv_obj_create(lv_tabview_tab_0);
+        lv_obj_set_x(lv_obj_2, 320);
+        lv_obj_set_y(lv_obj_2, 0);
+        lv_obj_set_width(lv_obj_2, 380);
+        lv_obj_set_height(lv_obj_2, 515);
+        lv_obj_add_style(lv_obj_2, &style_card, 0);
+        lv_obj_t * lv_label_1 = lv_label_create(lv_obj_2);
+        lv_label_set_text(lv_label_1, "Pompe a vide");
+        lv_obj_add_style(lv_label_1, &style_card_title, 0);
+
+        lv_obj_t * pump_en_btn = toggle_button_create(lv_tabview_tab_0, "", 90, 90);
+        lv_obj_set_name(pump_en_btn, "pump_en_btn");
+        lv_obj_set_y(pump_en_btn, 75);
+        lv_obj_set_x(pump_en_btn, 345);
+        lv_obj_add_event_cb(pump_en_btn, pump_enable_callback, LV_EVENT_PRESSED, NULL);
+
+        lv_obj_t * lv_label_2 = lv_label_create(lv_tabview_tab_0);
+        lv_label_set_text(lv_label_2, "CURRENT PRESSURE");
+        lv_obj_set_x(lv_label_2, 460);
+        lv_obj_set_y(lv_label_2, 80);
+        lv_obj_add_style(lv_label_2, &style_card_title, 0);
+
+        lv_obj_t * pump_pressure_value = lv_label_create(lv_tabview_tab_0);
+        lv_obj_set_name(pump_pressure_value, "pump_pressure_value");
+        lv_obj_set_x(pump_pressure_value, 460);
+        lv_obj_set_y(pump_pressure_value, 100);
+        lv_obj_set_width(pump_pressure_value, 220);
+        lv_label_bind_text(pump_pressure_value, &pump_pressure_text, NULL);
+        lv_obj_add_style(pump_pressure_value, &style_pump_value, 0);
+
+        lv_obj_t * lv_label_3 = lv_label_create(lv_tabview_tab_0);
+        lv_label_set_text(lv_label_3, "TARGET PRESSURE");
+        lv_obj_set_x(lv_label_3, 345);
+        lv_obj_set_y(lv_label_3, 195);
+        lv_obj_add_style(lv_label_3, &style_card_title, 0);
+
+        lv_obj_t * pump_target_btn = bound_button_create(lv_tabview_tab_0, &pump_target_text, lv_color_hex(0x334155), 56, 180);
+        lv_obj_set_name(pump_target_btn, "pump_target_btn");
+        lv_obj_set_x(pump_target_btn, 345);
+        lv_obj_set_y(pump_target_btn, 217);
+        lv_obj_add_event_cb(pump_target_btn, pump_target_keypad_open, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t * pump_pressure_scale = position_scale_create(lv_tabview_tab_0, &pump_pressure, 340, 60, 0, 10);
+        lv_obj_set_name(pump_pressure_scale, "pump_pressure_scale");
+        lv_obj_set_x(pump_pressure_scale, 345);
+        lv_obj_set_y(pump_pressure_scale, 435);
+        lv_scale_set_major_tick_every(pump_pressure_scale, 2);
 
         lv_obj_t * lv_tabview_tab_1 = lv_tabview_add_tab(lv_tabview_0, "Stats");
         lv_obj_set_flag(lv_tabview_tab_1, LV_OBJ_FLAG_SCROLLABLE, false);
@@ -166,10 +223,10 @@ lv_obj_t * main_create(void)
 
         lv_obj_t * lv_tabview_tab_2 = lv_tabview_add_tab(lv_tabview_0, "About");
         lv_obj_set_flag(lv_tabview_tab_2, LV_OBJ_FLAG_SCROLLABLE, false);
-        lv_obj_t * lv_label_1 = lv_label_create(lv_tabview_tab_2);
-        lv_label_set_text(lv_label_1, "Tab view organizes content into pages.");
-        lv_obj_set_width(lv_label_1, lv_pct(100));
-        lv_obj_add_style(lv_label_1, &style_card, 0);
+        lv_obj_t * lv_label_4 = lv_label_create(lv_tabview_tab_2);
+        lv_label_set_text(lv_label_4, "Tab view organizes content into pages.");
+        lv_obj_set_width(lv_label_4, lv_pct(100));
+        lv_obj_add_style(lv_label_4, &style_card, 0);
 
         lv_obj_t * lv_tabview_tab_bar_1 = lv_tabview_get_tab_bar(lv_tabview_0);
         lv_obj_set_height(lv_tabview_tab_bar_1, 48);

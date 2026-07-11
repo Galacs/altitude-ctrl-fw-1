@@ -264,6 +264,8 @@ void toggle_btn_callback(lv_event_t * e) {
     // lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, true);
 }
 
+void pump_enable_callback(lv_event_t * e) {}
+
 void from_comp_callback(lv_event_t * e) {
     ESP_LOGW(TAG, "from comp");
     // lv_obj_t *comp = lv_obj_find_by_name(parent, "comp_btn");
@@ -272,6 +274,73 @@ void from_comp_callback(lv_event_t * e) {
     //     ESP_LOGW(TAG, "found it");
     //     lv_label_set_text(label, "test");
     // }
+}
+
+static lv_obj_t* keypad_overlay = NULL;
+
+static void keypad_event_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * kb = lv_event_get_target(e);
+    lv_obj_t * ta = lv_keyboard_get_textarea(kb);
+ 
+    if(code == LV_EVENT_READY) {
+        const char * txt = lv_textarea_get_text(ta);
+        int32_t value = atoi(txt);
+ 
+        if(value < 0)   value = 0;
+        if(value > 101) value = 101;
+ 
+        /* pump_target_text is the only subject we have for the target,
+           so it's both the source of truth and the display string.
+           Your control loop should read/parse this same subject. */
+        char buf[16];
+        lv_snprintf(buf, sizeof(buf), "%d kPa", (int)value);
+        lv_subject_copy_string(&pump_target_text, buf);
+    }
+ 
+    if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        lv_obj_delete(keypad_overlay);
+        keypad_overlay = NULL;
+    }
+}
+ 
+/* Wired up in main.xml as: <event_cb trigger="clicked" callback="pump_target_keypad_open" /> */
+void pump_target_keypad_open(lv_event_t * e)
+{
+    (void)e;
+ 
+    if(keypad_overlay != NULL) return; /* already open, ignore double-tap */
+ 
+    /* Full-screen dimmed backdrop, drawn on top of everything (tabview included) */
+    keypad_overlay = lv_obj_create(lv_layer_top());
+    lv_obj_remove_style_all(keypad_overlay);
+    lv_obj_set_size(keypad_overlay, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(keypad_overlay, lv_color_black(), 0);
+    lv_obj_set_style_bg_opa(keypad_overlay, LV_OPA_60, 0);
+ 
+    /* Numeric-only textarea, pre-filled with the current target value.
+       pump_target_text is stored as "NN kPa", so strip the suffix back out. */
+    lv_obj_t * ta = lv_textarea_create(keypad_overlay);
+    lv_textarea_set_one_line(ta, true);
+    lv_textarea_set_accepted_chars(ta, "0123456789");
+    lv_obj_set_width(ta, 200);
+    lv_obj_align(ta, LV_ALIGN_TOP_MID, 0, 80);
+ 
+    const char * current_text = lv_subject_get_string(&pump_target_text);
+    int32_t current_value = current_text ? atoi(current_text) : 0;
+ 
+    char current[8];
+    lv_snprintf(current, sizeof(current), "%d", (int)current_value);
+    lv_textarea_set_text(ta, current);
+ 
+    /* Number-only keyboard, bound to the textarea above */
+    lv_obj_t * kb = lv_keyboard_create(keypad_overlay);
+    lv_keyboard_set_mode(kb, LV_KEYBOARD_MODE_NUMBER);
+    lv_keyboard_set_textarea(kb, ta);
+ 
+    lv_obj_add_event_cb(kb, keypad_event_cb, LV_EVENT_READY, NULL);
+    lv_obj_add_event_cb(kb, keypad_event_cb, LV_EVENT_CANCEL, NULL);
 }
 
 void app_main(void) {

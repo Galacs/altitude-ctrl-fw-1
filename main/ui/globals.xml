@@ -15,6 +15,10 @@
 		<string name="txt_btn_stepper_en" value="&#xF015;" />
 		<int name="valve_pose" value="50" />
 		<int name="valve_target" value="50" />
+		<string name="pump_target_text" value="cible" />
+		<string name="pump_pressure" value="50" />
+		<string name="pump_pressure_text" value="pression" />
+
 		<!-- Add <int>, <string>, or <float> subjects here -->
 	</subjects>
 

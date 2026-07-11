@@ -91,6 +91,9 @@ bool altitude_ctrl_ui_1_mini_check_target(uint32_t target);
 extern lv_subject_t txt_btn_stepper_en;
 extern lv_subject_t valve_pose;
 extern lv_subject_t valve_target;
+extern lv_subject_t pump_target_text;
+extern lv_subject_t pump_pressure;
+extern lv_subject_t pump_pressure_text;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -102,6 +105,8 @@ extern lv_subject_t valve_target;
 
 void mon_callback_1(lv_event_t * e);
 void slider_update_callback(lv_event_t * e);
+void pump_enable_callback(lv_event_t * e);
+void pump_target_keypad_open(lv_event_t * e);
 
 /**
  * Initialize the component library
