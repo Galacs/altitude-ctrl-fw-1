@@ -426,6 +426,76 @@ void pump_target_keypad_open(lv_event_t * e)
     lv_obj_add_event_cb(kb, keypad_event_cb, LV_EVENT_CANCEL, NULL);
 }
 
+typedef struct {
+    const char * name;
+    const int32_t * points;
+    size_t point_count;
+} altitude_profile_t;
+ 
+static const int32_t profile_ascent_points[]  = { 0, 10, 25, 45, 60, 75, 85, 92, 97, 100 };
+static const int32_t profile_descent_points[] = { 100, 97, 90, 78, 60, 42, 25, 12, 4, 0 };
+static const int32_t profile_cycle_points[]   = { 0, 30, 60, 90, 100, 90, 60, 30, 10, 0 };
+ 
+static const altitude_profile_t profiles[] = {
+    { "Mbnte", profile_ascent_points,  10 },
+    { "Descend", profile_descent_points, 10 },
+    { "Complet", profile_cycle_points,   10 },
+};
+#define PROFILE_COUNT (sizeof(profiles) / sizeof(profiles[0]))
+ 
+extern lv_obj_t * parent; /* set in app_main after main_create() */
+ 
+/* Redraws the preview chart to show the given profile's curve */
+static void profile_chart_show(uint32_t index)
+{
+    if(index >= PROFILE_COUNT) return;
+ 
+    lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
+    if(chart == NULL) return;
+ 
+    lv_chart_series_t * ser = lv_chart_get_series_next(chart, NULL);
+    if(ser == NULL) return;
+ 
+    const altitude_profile_t * p = &profiles[index];
+ 
+    /* Resize the chart to match this profile's resolution - profiles don't
+       all need the same number of points */
+    lv_chart_set_point_count(chart, (uint32_t)p->point_count);
+ 
+    for(size_t i = 0; i < p->point_count; i++) {
+        lv_chart_set_value_by_id(chart, ser, (uint16_t)i, p->points[i]);
+    }
+ 
+    lv_chart_refresh(chart);
+}
+ 
+void profile_dropdown_changed(lv_event_t * e)
+{
+    lv_obj_t * dd = lv_event_get_target(e);
+    uint32_t selected = lv_dropdown_get_selected(dd);
+    profile_chart_show(selected);
+}
+ 
+void profiles_ui_init(void)
+{
+    lv_obj_t * dd = lv_obj_find_by_name(parent, "profile_dropdown");
+    if(dd == NULL) return;
+ 
+    /* lv_dropdown wants one "\n"-joined string of options. Build it from
+       whatever storage you actually load profiles from - this loop over
+       the static placeholder array is the part to replace. */
+    char options[256] = { 0 };
+    for(size_t i = 0; i < PROFILE_COUNT; i++) {
+        strncat(options, profiles[i].name, sizeof(options) - strlen(options) - 1);
+        if(i != PROFILE_COUNT - 1) {
+            strncat(options, "\n", sizeof(options) - strlen(options) - 1);
+        }
+    }
+    lv_dropdown_set_options(dd, options);
+ 
+    profile_chart_show(0); /* preview the first profile by default */
+}
+
 void app_main(void) {
     ESP_LOGW(TAG, "%d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     ESP_LOGW(TAG, "%d", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
@@ -440,6 +510,7 @@ void app_main(void) {
         // lv_screen_load(screen_components_create());
         parent = main_create();
         lv_screen_load(parent);
+        profiles_ui_init();
         esp_lv_adapter_unlock();
     }
 
@@ -447,16 +518,16 @@ void app_main(void) {
     IO_EXTENSION_Output(IO_EXTENSION_IO_2, 1);  // Backlight ON configuration
     // printf("bonsoir\n");
 
-    if (esp_lv_adapter_lock(-1) == ESP_OK) {
-        lv_obj_t *chart = lv_obj_find_by_name(parent, "lv_chart_0");
-        lv_chart_series_t *ser = lv_chart_get_series_next(chart, NULL);
-        lv_chart_set_next_value(chart, ser, 69);
-        lv_chart_set_next_value(chart, ser, 69);
-        lv_chart_set_next_value(chart, ser, 69);
-        lv_chart_set_next_value(chart, ser, 69);
-        ESP_LOGW(TAG, "added value to chart ser 1");
-        esp_lv_adapter_unlock();
-    }
+    // if (esp_lv_adapter_lock(-1) == ESP_OK) {
+    //     lv_obj_t *chart = lv_obj_find_by_name(parent, "lv_chart_0");
+    //     lv_chart_series_t *ser = lv_chart_get_series_next(chart, NULL);
+    //     lv_chart_set_next_value(chart, ser, 69);
+    //     lv_chart_set_next_value(chart, ser, 69);
+    //     lv_chart_set_next_value(chart, ser, 69);
+    //     lv_chart_set_next_value(chart, ser, 69);
+    //     ESP_LOGW(TAG, "added value to chart ser 1");
+    //     esp_lv_adapter_unlock();
+    // }
 
 
     // can_manager_t can_mgr;
