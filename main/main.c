@@ -436,10 +436,6 @@ void pump_target_keypad_open(lv_event_t * e)
 #define PROFILE_DIR         "S:/profiles/"          /* what the file explorer browses (lv_fs path) */
 #define FS_DRIVE_PREFIX_LEN 2
 
-#define PRESSURE_SCALE            10
-#define PRESSURE_AXIS_MIN_TENTHS  0
-#define PRESSURE_AXIS_MAX_TENTHS  1013
- 
 static int32_t profile_time[PROFILE_MAX_POINTS];      /* seconds */
 static int32_t profile_pressure[PROFILE_MAX_POINTS];  /* tenths of kPa, NOT inverted */
 static size_t  profile_point_count = 0;
@@ -461,7 +457,7 @@ static void profile_chart_redraw(void)
     lv_chart_set_axis_range(chart, LV_CHART_AXIS_PRIMARY_X, 0, profile_time[profile_point_count - 1]);
  
     for(size_t i = 0; i < profile_point_count; i++) {
-        int32_t plotted_y = PRESSURE_AXIS_MAX_TENTHS - profile_pressure[i]; /* the actual inversion */
+        int32_t plotted_y = profile_pressure[i];
         lv_chart_set_series_value_by_id2(chart, profile_series, (uint32_t)i, profile_time[i], plotted_y);
     }
  
@@ -494,7 +490,7 @@ static bool profile_load(const char * real_path)
         float p_kpa;
         if(sscanf(line, "%d,%f", &t_sec, &p_kpa) == 2) {
             profile_time[profile_point_count]     = t_sec;
-            profile_pressure[profile_point_count] = (int32_t)(p_kpa * PRESSURE_SCALE + 0.5f);
+            profile_pressure[profile_point_count] = (int32_t)(p_kpa);
             profile_point_count++;
         }
     }
@@ -522,12 +518,11 @@ static void profile_explorer_event_cb(lv_event_t * e)
                 MOUNT_POINT, cur_path + FS_DRIVE_PREFIX_LEN, sel_fn);
  
     if(profile_load(real_path)) {
+        ESP_LOGW(TAG, "et ca redraw ?");
         profile_chart_redraw();
     }
 }
  
-/* Call once after the screen is created (see app_main), same place the
-   dropdown version's profiles_ui_init() was called. */
 void profiles_ui_init(void)
 {
     lv_obj_t * container = lv_obj_find_by_name(parent, "profile_explorer_container");
@@ -554,6 +549,12 @@ void profiles_ui_init(void)
         mkdir(PROFILE_DIR_REAL, 0775);
     }
  
+    lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
+    if(chart != NULL) {
+        profile_series = lv_chart_add_series(chart, lv_color_hex(0x60a5fa),
+                                              LV_CHART_AXIS_PRIMARY_X | LV_CHART_AXIS_PRIMARY_Y);
+    }
+
     lv_obj_t * explorer = lv_file_explorer_create(container);
     lv_obj_set_size(explorer, LV_PCT(100), LV_PCT(100));
     lv_file_explorer_set_sort(explorer, LV_EXPLORER_SORT_KIND);
