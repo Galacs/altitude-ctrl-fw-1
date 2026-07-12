@@ -448,28 +448,6 @@ static lv_chart_series_t * profile_series = NULL; /* set once in profiles_ui_ini
  
 extern lv_obj_t * parent; /* set in app_main after main_create() */
  
-/* Custom tick labels: LVGL has no built-in axis-invert, so the Y data is
-   plotted as (PRESSURE_AXIS_MAX_TENTHS - real_value) in profile_chart_redraw()
-   below, putting high pressure at the bottom/origin and low pressure at the
-   top as requested. This callback only fixes up the *displayed labels* so
-   they still read as real kPa instead of the inverted plotting value. The
-   X axis just needs its raw seconds value formatted with a unit suffix. */
-static void chart_tick_label_cb(lv_event_t * e)
-{
-    // lv_obj_draw_part_dsc_t * dsc = lv_event_get_draw_part_dsc(e);
-    // if(!lv_obj_draw_part_check_type(dsc, &lv_chart_class, LV_CHART_DRAW_PART_TICK_LABEL)) return;
-    // if(dsc->text == NULL) return;
- 
-    // if(dsc->id == LV_CHART_AXIS_PRIMARY_X) {
-    //     lv_snprintf(dsc->text, dsc->text_length, "%ds", (int)dsc->value);
-    // }
-    // else if(dsc->id == LV_CHART_AXIS_PRIMARY_Y) {
-    //     int32_t real_tenths = PRESSURE_AXIS_MAX_TENTHS - dsc->value;
-    //     lv_snprintf(dsc->text, dsc->text_length, "%d.%01d",
-    //                 (int)(real_tenths / PRESSURE_SCALE), (int)(real_tenths % PRESSURE_SCALE));
-    // }
-}
- 
 static void profile_chart_redraw(void)
 {
     lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
@@ -548,38 +526,10 @@ static void profile_explorer_event_cb(lv_event_t * e)
     }
 }
  
-/* One-time chart setup: scatter type (needed for real x/y point pairs
-   instead of index-spaced values), dark styling, fixed Y range, and the
-   custom tick-label callback that undoes the Y-inversion for display. */
-static void profile_chart_init(void)
-{
-    lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
-    if(chart == NULL) return;
- 
-    lv_chart_set_type(chart, LV_CHART_TYPE_SCATTER);
- 
-    /* Y range is fixed (0-101.3 kPa, in tenths) since it's a physical
-       constant of the chamber. X range gets set per-profile in
-       profile_chart_redraw() since profile duration varies. */
-    lv_chart_set_axis_range(chart, LV_CHART_AXIS_PRIMARY_Y, PRESSURE_AXIS_MIN_TENTHS, PRESSURE_AXIS_MAX_TENTHS);
- 
-    /* Dark styling to match the rest of the UI */
-    // lv_obj_set_style_line_color(chart, lv_color_hex(0x334155), LV_PART_MAIN);   /* division lines */
-    // lv_obj_set_style_text_color(chart, lv_color_hex(0x94a3b8), LV_PART_TICKS);  /* tick labels */
-    // lv_obj_set_style_line_color(chart, lv_color_hex(0x475569), LV_PART_TICKS);  /* tick marks */
- 
-    // profile_series = lv_chart_add_series(chart, lv_color_hex(0x3b82f6),
-    //                                       LV_CHART_AXIS_PRIMARY_Y | LV_CHART_AXIS_PRIMARY_X);
- 
-    // lv_obj_add_event_cb(chart, chart_tick_label_cb, LV_EVENT_DRAW_PART_BEGIN, NULL);
-}
- 
 /* Call once after the screen is created (see app_main), same place the
    dropdown version's profiles_ui_init() was called. */
 void profiles_ui_init(void)
 {
-    profile_chart_init();
- 
     lv_obj_t * container = lv_obj_find_by_name(parent, "profile_explorer_container");
     if(container == NULL) return;
  

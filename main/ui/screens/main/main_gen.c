@@ -114,7 +114,7 @@ lv_obj_t * main_create(void)
         lv_obj_t * lv_tabview_0 = lv_tabview_create(lv_obj_0);
         lv_tabview_set_tab_bar_position(lv_tabview_0, LV_DIR_BOTTOM);
         lv_obj_set_align(lv_tabview_0, LV_ALIGN_CENTER);
-        lv_tabview_set_active(lv_tabview_0, 0, false);
+        lv_tabview_set_active(lv_tabview_0, 1, false);
         lv_obj_add_style(lv_tabview_0, &style_tv, 0);
         lv_obj_t * lv_tabview_tab_bar_0 = lv_tabview_get_tab_bar(lv_tabview_0);
         lv_obj_set_height(lv_tabview_tab_bar_0, 48);
@@ -238,7 +238,7 @@ lv_obj_t * main_create(void)
         lv_obj_add_style(lv_label_5, &style_card_title, 0);
 
         lv_obj_t * lv_label_6 = lv_label_create(lv_tabview_tab_1);
-        lv_label_set_text(lv_label_6, "SELECT PROFILE");
+        lv_label_set_text(lv_label_6, "Choix profil");
         lv_obj_set_x(lv_label_6, 40);
         lv_obj_set_y(lv_label_6, 80);
         lv_obj_add_style(lv_label_6, &style_card_title, 0);
@@ -248,24 +248,42 @@ lv_obj_t * main_create(void)
         lv_obj_set_x(profile_explorer_container, 40);
         lv_obj_set_y(profile_explorer_container, 100);
         lv_obj_set_width(profile_explorer_container, 300);
-        lv_obj_set_height(profile_explorer_container, 410);
+        lv_obj_set_height(profile_explorer_container, 400);
         lv_obj_add_style(profile_explorer_container, &style_dropdown, 0);
 
         lv_obj_t * profile_preview_chart = lv_chart_create(lv_tabview_tab_1);
         lv_obj_set_name(profile_preview_chart, "profile_preview_chart");
-        lv_obj_set_x(profile_preview_chart, 380);
+        lv_obj_set_x(profile_preview_chart, 400);
         lv_obj_set_y(profile_preview_chart, 20);
-        lv_obj_set_width(profile_preview_chart, 600);
-        lv_obj_set_height(profile_preview_chart, 480);
+        lv_obj_set_width(profile_preview_chart, 580);
+        lv_obj_set_height(profile_preview_chart, 470);
         lv_chart_set_type(profile_preview_chart, LV_CHART_TYPE_SCATTER);
-        lv_chart_set_point_count(profile_preview_chart, 2);
         lv_chart_set_hor_div_line_count(profile_preview_chart, 5);
         lv_chart_set_ver_div_line_count(profile_preview_chart, 6);
         lv_obj_set_style_bg_color(profile_preview_chart, lv_color_hex(0x0f172a), 0);
         lv_obj_set_style_bg_opa(profile_preview_chart, (255 * 100 / 100), 0);
         lv_obj_set_style_border_color(profile_preview_chart, lv_color_hex(0x334155), 0);
         lv_obj_set_style_border_width(profile_preview_chart, 1, 0);
-        lv_obj_set_style_radius(profile_preview_chart, 12, 0);
+        lv_obj_set_style_pad_all(profile_preview_chart, 0, 0);
+        lv_obj_set_style_radius(profile_preview_chart, 0, 0);
+
+        lv_obj_t * preview_x_axis = position_scale_create(lv_tabview_tab_1, &temperature, 130, 470, 10, 110);
+        lv_obj_set_name(preview_x_axis, "preview_x_axis");
+        lv_obj_set_x(preview_x_axis, 270);
+        lv_obj_set_y(preview_x_axis, 20);
+        lv_obj_set_style_bg_opa(preview_x_axis, 0, 0);
+        lv_scale_set_mode(preview_x_axis, LV_SCALE_MODE_VERTICAL_LEFT);
+        lv_scale_set_major_tick_every(preview_x_axis, 5);
+        lv_obj_set_style_pad_all(preview_x_axis, 0, 0);
+
+        lv_obj_t * preview_y_axis = position_scale_create(lv_tabview_tab_1, &temperature, 580, 60, 10, 110);
+        lv_obj_set_name(preview_y_axis, "preview_y_axis");
+        lv_obj_set_x(preview_y_axis, 400);
+        lv_obj_set_y(preview_y_axis, 490);
+        lv_obj_set_style_bg_opa(preview_y_axis, 0, 0);
+        lv_scale_set_mode(preview_y_axis, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
+        lv_scale_set_major_tick_every(preview_y_axis, 4);
+        lv_obj_set_style_pad_all(preview_y_axis, 0, 0);
 
         lv_obj_t * lv_tabview_tab_2 = lv_tabview_add_tab(lv_tabview_0, "About");
         lv_obj_set_flag(lv_tabview_tab_2, LV_OBJ_FLAG_SCROLLABLE, false);
