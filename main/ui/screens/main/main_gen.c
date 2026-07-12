@@ -161,69 +161,87 @@ lv_obj_t * main_create(void)
 
         lv_obj_t * lv_obj_2 = lv_obj_create(lv_tabview_tab_0);
         lv_obj_set_x(lv_obj_2, 320);
-        lv_obj_set_y(lv_obj_2, 0);
-        lv_obj_set_width(lv_obj_2, 380);
-        lv_obj_set_height(lv_obj_2, 515);
+        lv_obj_set_y(lv_obj_2, 365);
+        lv_obj_set_width(lv_obj_2, 500);
+        lv_obj_set_height(lv_obj_2, 150);
         lv_obj_add_style(lv_obj_2, &style_card, 0);
         lv_obj_t * lv_label_1 = lv_label_create(lv_obj_2);
         lv_label_set_text(lv_label_1, "Pompe a vide");
         lv_obj_add_style(lv_label_1, &style_card_title, 0);
 
-        lv_obj_t * pump_en_btn = toggle_button_create(lv_tabview_tab_0, "", 90, 90);
+        lv_obj_t * pump_en_btn = toggle_button_create(lv_tabview_tab_0, "", 90, 60);
         lv_obj_set_name(pump_en_btn, "pump_en_btn");
-        lv_obj_set_y(pump_en_btn, 75);
-        lv_obj_set_x(pump_en_btn, 345);
+        lv_obj_set_y(pump_en_btn, 433);
+        lv_obj_set_x(pump_en_btn, 710);
         lv_obj_add_event_cb(pump_en_btn, pump_enable_callback, LV_EVENT_PRESSED, NULL);
 
         lv_obj_t * lv_label_2 = lv_label_create(lv_tabview_tab_0);
-        lv_label_set_text(lv_label_2, "CURRENT PRESSURE");
-        lv_obj_set_x(lv_label_2, 460);
-        lv_obj_set_y(lv_label_2, 80);
+        lv_label_set_text(lv_label_2, "Pression actuelle: ");
+        lv_obj_set_x(lv_label_2, 340);
+        lv_obj_set_y(lv_label_2, 409);
         lv_obj_add_style(lv_label_2, &style_card_title, 0);
 
         lv_obj_t * pump_pressure_value = lv_label_create(lv_tabview_tab_0);
         lv_obj_set_name(pump_pressure_value, "pump_pressure_value");
-        lv_obj_set_x(pump_pressure_value, 460);
-        lv_obj_set_y(pump_pressure_value, 100);
+        lv_obj_set_x(pump_pressure_value, 495);
+        lv_obj_set_y(pump_pressure_value, 409);
         lv_obj_set_width(pump_pressure_value, 220);
         lv_label_bind_text(pump_pressure_value, &pump_pressure_text, NULL);
         lv_obj_add_style(pump_pressure_value, &style_pump_value, 0);
 
         lv_obj_t * lv_label_3 = lv_label_create(lv_tabview_tab_0);
-        lv_label_set_text(lv_label_3, "TARGET PRESSURE");
-        lv_obj_set_x(lv_label_3, 345);
-        lv_obj_set_y(lv_label_3, 195);
+        lv_label_set_text(lv_label_3, "Cible: ");
+        lv_obj_set_x(lv_label_3, 645);
+        lv_obj_set_y(lv_label_3, 395);
         lv_obj_add_style(lv_label_3, &style_card_title, 0);
 
-        lv_obj_t * pump_target_btn = bound_button_create(lv_tabview_tab_0, &pump_target_text, lv_color_hex(0x334155), 56, 180);
+        lv_obj_t * pump_target_btn = bound_button_create(lv_tabview_tab_0, &pump_target_text, lv_color_hex(0x334155), 40, 90);
         lv_obj_set_name(pump_target_btn, "pump_target_btn");
-        lv_obj_set_x(pump_target_btn, 345);
-        lv_obj_set_y(pump_target_btn, 217);
+        lv_obj_set_x(pump_target_btn, 710);
+        lv_obj_set_y(pump_target_btn, 380);
         lv_obj_add_event_cb(pump_target_btn, pump_target_keypad_open, LV_EVENT_CLICKED, NULL);
 
-        lv_obj_t * pump_pressure_scale = position_scale_create(lv_tabview_tab_0, &pump_pressure, 340, 60, 0, 10);
+        lv_obj_t * pump_pressure_scale = position_scale_create(lv_tabview_tab_0, &pump_pressure, 355, 60, 10, 110);
         lv_obj_set_name(pump_pressure_scale, "pump_pressure_scale");
-        lv_obj_set_x(pump_pressure_scale, 345);
+        lv_obj_set_x(pump_pressure_scale, 335);
         lv_obj_set_y(pump_pressure_scale, 435);
-        lv_scale_set_major_tick_every(pump_pressure_scale, 2);
+        lv_scale_set_major_tick_every(pump_pressure_scale, 4);
+
+        lv_obj_t * lv_obj_3 = lv_obj_create(lv_tabview_tab_0);
+        lv_obj_set_x(lv_obj_3, 840);
+        lv_obj_set_y(lv_obj_3, 365);
+        lv_obj_set_width(lv_obj_3, 150);
+        lv_obj_set_height(lv_obj_3, 150);
+        lv_obj_add_style(lv_obj_3, &style_card, 0);
+        lv_obj_t * lv_label_4 = lv_label_create(lv_obj_3);
+        lv_label_set_text(lv_label_4, "Temperature");
+        lv_obj_add_style(lv_label_4, &style_card_title, 0);
+
+        lv_obj_t * temperature_scale = position_scale_create(lv_tabview_tab_0, &temperature, 130, 130, 10, 70);
+        lv_obj_set_name(temperature_scale, "temperature_scale");
+        lv_obj_set_x(temperature_scale, 850);
+        lv_obj_set_y(temperature_scale, 400);
+        lv_obj_set_style_bg_opa(temperature_scale, 0, 0);
+        lv_scale_set_mode(temperature_scale, LV_SCALE_MODE_ROUND_INNER);
+        lv_scale_set_major_tick_every(temperature_scale, 5);
 
         lv_obj_t * lv_tabview_tab_1 = lv_tabview_add_tab(lv_tabview_0, "Stats");
         lv_obj_set_flag(lv_tabview_tab_1, LV_OBJ_FLAG_SCROLLABLE, false);
-        lv_obj_t * lv_obj_3 = lv_obj_create(lv_tabview_tab_1);
-        lv_obj_set_x(lv_obj_3, 20);
-        lv_obj_set_y(lv_obj_3, 0);
-        lv_obj_set_width(lv_obj_3, 340);
-        lv_obj_set_height(lv_obj_3, 515);
-        lv_obj_add_style(lv_obj_3, &style_card, 0);
-        lv_obj_t * lv_label_4 = lv_label_create(lv_obj_3);
-        lv_label_set_text(lv_label_4, "Profile Preview");
-        lv_obj_add_style(lv_label_4, &style_card_title, 0);
-
-        lv_obj_t * lv_label_5 = lv_label_create(lv_tabview_tab_1);
-        lv_label_set_text(lv_label_5, "SELECT PROFILE");
-        lv_obj_set_x(lv_label_5, 40);
-        lv_obj_set_y(lv_label_5, 80);
+        lv_obj_t * lv_obj_4 = lv_obj_create(lv_tabview_tab_1);
+        lv_obj_set_x(lv_obj_4, 20);
+        lv_obj_set_y(lv_obj_4, 0);
+        lv_obj_set_width(lv_obj_4, 340);
+        lv_obj_set_height(lv_obj_4, 515);
+        lv_obj_add_style(lv_obj_4, &style_card, 0);
+        lv_obj_t * lv_label_5 = lv_label_create(lv_obj_4);
+        lv_label_set_text(lv_label_5, "Profile Preview");
         lv_obj_add_style(lv_label_5, &style_card_title, 0);
+
+        lv_obj_t * lv_label_6 = lv_label_create(lv_tabview_tab_1);
+        lv_label_set_text(lv_label_6, "SELECT PROFILE");
+        lv_obj_set_x(lv_label_6, 40);
+        lv_obj_set_y(lv_label_6, 80);
+        lv_obj_add_style(lv_label_6, &style_card_title, 0);
 
         lv_obj_t * profile_explorer_container = lv_obj_create(lv_tabview_tab_1);
         lv_obj_set_name(profile_explorer_container, "profile_explorer_container");
@@ -239,22 +257,22 @@ lv_obj_t * main_create(void)
         lv_obj_set_y(profile_preview_chart, 20);
         lv_obj_set_width(profile_preview_chart, 600);
         lv_obj_set_height(profile_preview_chart, 480);
-        lv_chart_set_type(profile_preview_chart, LV_CHART_TYPE_LINE);
+        lv_chart_set_type(profile_preview_chart, LV_CHART_TYPE_SCATTER);
         lv_chart_set_point_count(profile_preview_chart, 2);
         lv_chart_set_hor_div_line_count(profile_preview_chart, 5);
         lv_chart_set_ver_div_line_count(profile_preview_chart, 6);
-        lv_chart_set_axis_min_value(profile_preview_chart, LV_CHART_AXIS_PRIMARY_Y, 0);
-        lv_chart_set_axis_max_value(profile_preview_chart, LV_CHART_AXIS_PRIMARY_Y, 100);
-        lv_chart_series_t * lv_chart_series_0 = lv_chart_add_series(profile_preview_chart, lv_color_hex(0x3b82f6), LV_CHART_AXIS_PRIMARY_Y);
-        static const int32_t profile_preview_chart_values_0[] = {0, 0};
-        lv_chart_set_series_values(profile_preview_chart, lv_chart_series_0, profile_preview_chart_values_0, 2);
+        lv_obj_set_style_bg_color(profile_preview_chart, lv_color_hex(0x0f172a), 0);
+        lv_obj_set_style_bg_opa(profile_preview_chart, (255 * 100 / 100), 0);
+        lv_obj_set_style_border_color(profile_preview_chart, lv_color_hex(0x334155), 0);
+        lv_obj_set_style_border_width(profile_preview_chart, 1, 0);
+        lv_obj_set_style_radius(profile_preview_chart, 12, 0);
 
         lv_obj_t * lv_tabview_tab_2 = lv_tabview_add_tab(lv_tabview_0, "About");
         lv_obj_set_flag(lv_tabview_tab_2, LV_OBJ_FLAG_SCROLLABLE, false);
-        lv_obj_t * lv_label_6 = lv_label_create(lv_tabview_tab_2);
-        lv_label_set_text(lv_label_6, "Tab view organizes content into pages.");
-        lv_obj_set_width(lv_label_6, lv_pct(100));
-        lv_obj_add_style(lv_label_6, &style_card, 0);
+        lv_obj_t * lv_label_7 = lv_label_create(lv_tabview_tab_2);
+        lv_label_set_text(lv_label_7, "Tab view organizes content into pages.");
+        lv_obj_set_width(lv_label_7, lv_pct(100));
+        lv_obj_add_style(lv_label_7, &style_card, 0);
 
         lv_obj_t * lv_tabview_tab_bar_1 = lv_tabview_get_tab_bar(lv_tabview_0);
         lv_obj_set_height(lv_tabview_tab_bar_1, 48);

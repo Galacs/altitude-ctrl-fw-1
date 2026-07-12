@@ -322,6 +322,7 @@ static void keypad_event_cb(lv_event_t * e)
             char buf[16];
             lv_snprintf(buf, sizeof(buf), "%d kPa", (int)value);
             lv_subject_copy_string(&pump_target_text, buf);
+            lv_subject_set_int(&pump_pressure, value);
         }
         /* empty field on Enter = leave pump_target_text untouched */
     }
@@ -433,41 +434,90 @@ void pump_target_keypad_open(lv_event_t * e)
 #define PROFILE_MAX_POINTS  256
 #define PROFILE_DIR_REAL    MOUNT_POINT "/profiles" /* real POSIX path, for stat()/mkdir() */
 #define PROFILE_DIR         "S:/profiles/"          /* what the file explorer browses (lv_fs path) */
-#define FS_DRIVE_PREFIX_LEN 2    
+#define FS_DRIVE_PREFIX_LEN 2
 
-static int32_t profile_points[PROFILE_MAX_POINTS];
+#define PRESSURE_SCALE            10
+#define PRESSURE_AXIS_MIN_TENTHS  0
+#define PRESSURE_AXIS_MAX_TENTHS  1013
+ 
+static int32_t profile_time[PROFILE_MAX_POINTS];      /* seconds */
+static int32_t profile_pressure[PROFILE_MAX_POINTS];  /* tenths of kPa, NOT inverted */
 static size_t  profile_point_count = 0;
  
+static lv_chart_series_t * profile_series = NULL; /* set once in profiles_ui_init() */
+ 
 extern lv_obj_t * parent; /* set in app_main after main_create() */
+ 
+/* Custom tick labels: LVGL has no built-in axis-invert, so the Y data is
+   plotted as (PRESSURE_AXIS_MAX_TENTHS - real_value) in profile_chart_redraw()
+   below, putting high pressure at the bottom/origin and low pressure at the
+   top as requested. This callback only fixes up the *displayed labels* so
+   they still read as real kPa instead of the inverted plotting value. The
+   X axis just needs its raw seconds value formatted with a unit suffix. */
+static void chart_tick_label_cb(lv_event_t * e)
+{
+    // lv_obj_draw_part_dsc_t * dsc = lv_event_get_draw_part_dsc(e);
+    // if(!lv_obj_draw_part_check_type(dsc, &lv_chart_class, LV_CHART_DRAW_PART_TICK_LABEL)) return;
+    // if(dsc->text == NULL) return;
+ 
+    // if(dsc->id == LV_CHART_AXIS_PRIMARY_X) {
+    //     lv_snprintf(dsc->text, dsc->text_length, "%ds", (int)dsc->value);
+    // }
+    // else if(dsc->id == LV_CHART_AXIS_PRIMARY_Y) {
+    //     int32_t real_tenths = PRESSURE_AXIS_MAX_TENTHS - dsc->value;
+    //     lv_snprintf(dsc->text, dsc->text_length, "%d.%01d",
+    //                 (int)(real_tenths / PRESSURE_SCALE), (int)(real_tenths % PRESSURE_SCALE));
+    // }
+}
  
 static void profile_chart_redraw(void)
 {
     lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
-    if(chart == NULL) return;
- 
-    lv_chart_series_t * ser = lv_chart_get_series_next(chart, NULL);
-    if(ser == NULL) return;
+    if(chart == NULL || profile_series == NULL || profile_point_count == 0) return;
  
     lv_chart_set_point_count(chart, (uint32_t)profile_point_count);
+ 
+    /* X axis range follows this profile's actual duration - assumes rows
+       are in ascending time order, which is what a normal profile export
+       would look like */
+    lv_chart_set_axis_range(chart, LV_CHART_AXIS_PRIMARY_X, 0, profile_time[profile_point_count - 1]);
+ 
     for(size_t i = 0; i < profile_point_count; i++) {
-        lv_chart_set_value_by_id(chart, ser, (uint16_t)i, profile_points[i]);
+        int32_t plotted_y = PRESSURE_AXIS_MAX_TENTHS - profile_pressure[i]; /* the actual inversion */
+        lv_chart_set_series_value_by_id2(chart, profile_series, (uint32_t)i, profile_time[i], plotted_y);
     }
+ 
     lv_chart_refresh(chart);
 }
  
+/* Parses a .alt.csv file: one header row (skipped), then "time_s,pressure_kpa"
+ * per line, e.g.:
+ *   time_s,pressure_kpa
+ *   0,101.3
+ *   10,95.0
+ *   ...
+ * `real_path` is a plain POSIX path (e.g. "/sdcard/profiles/ascent.alt.csv"),
+ * NOT the "S:/..." path the file explorer hands you - see the caller. */
 static bool profile_load(const char * real_path)
 {
+    ESP_LOGW(TAG, "ca essaie la");
     FILE * f = fopen(real_path, "r");
     if(f == NULL) {
         LV_LOG_WARN("Could not open profile file: %s", real_path);
         return false;
     }
  
+    char line[64];
+    fgets(line, sizeof(line), f); /* discard header row */
+ 
     profile_point_count = 0;
-    char line[32];
     while(profile_point_count < PROFILE_MAX_POINTS && fgets(line, sizeof(line), f) != NULL) {
-        if(line[0] != '\0' && line[0] != '\r' && line[0] != '\n') {
-            profile_points[profile_point_count++] = (int32_t)atoi(line);
+        int   t_sec;
+        float p_kpa;
+        if(sscanf(line, "%d,%f", &t_sec, &p_kpa) == 2) {
+            profile_time[profile_point_count]     = t_sec;
+            profile_pressure[profile_point_count] = (int32_t)(p_kpa * PRESSURE_SCALE + 0.5f);
+            profile_point_count++;
         }
     }
  
@@ -498,10 +548,38 @@ static void profile_explorer_event_cb(lv_event_t * e)
     }
 }
  
+/* One-time chart setup: scatter type (needed for real x/y point pairs
+   instead of index-spaced values), dark styling, fixed Y range, and the
+   custom tick-label callback that undoes the Y-inversion for display. */
+static void profile_chart_init(void)
+{
+    lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
+    if(chart == NULL) return;
+ 
+    lv_chart_set_type(chart, LV_CHART_TYPE_SCATTER);
+ 
+    /* Y range is fixed (0-101.3 kPa, in tenths) since it's a physical
+       constant of the chamber. X range gets set per-profile in
+       profile_chart_redraw() since profile duration varies. */
+    lv_chart_set_axis_range(chart, LV_CHART_AXIS_PRIMARY_Y, PRESSURE_AXIS_MIN_TENTHS, PRESSURE_AXIS_MAX_TENTHS);
+ 
+    /* Dark styling to match the rest of the UI */
+    // lv_obj_set_style_line_color(chart, lv_color_hex(0x334155), LV_PART_MAIN);   /* division lines */
+    // lv_obj_set_style_text_color(chart, lv_color_hex(0x94a3b8), LV_PART_TICKS);  /* tick labels */
+    // lv_obj_set_style_line_color(chart, lv_color_hex(0x475569), LV_PART_TICKS);  /* tick marks */
+ 
+    // profile_series = lv_chart_add_series(chart, lv_color_hex(0x3b82f6),
+    //                                       LV_CHART_AXIS_PRIMARY_Y | LV_CHART_AXIS_PRIMARY_X);
+ 
+    // lv_obj_add_event_cb(chart, chart_tick_label_cb, LV_EVENT_DRAW_PART_BEGIN, NULL);
+}
+ 
 /* Call once after the screen is created (see app_main), same place the
    dropdown version's profiles_ui_init() was called. */
 void profiles_ui_init(void)
 {
+    profile_chart_init();
+ 
     lv_obj_t * container = lv_obj_find_by_name(parent, "profile_explorer_container");
     if(container == NULL) return;
  
