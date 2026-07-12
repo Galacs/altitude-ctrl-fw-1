@@ -107,7 +107,6 @@ void mon_callback_1(lv_event_t * e);
 void slider_update_callback(lv_event_t * e);
 void pump_enable_callback(lv_event_t * e);
 void pump_target_keypad_open(lv_event_t * e);
-void profile_dropdown_changed(lv_event_t * e);
 
 /**
  * Initialize the component library

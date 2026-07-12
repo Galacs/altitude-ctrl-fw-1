@@ -119,19 +119,21 @@
 			<lv_tabview-tab text="Stats" scrollable="false">
 				<lv_obj x="20" y="0" width="340" height="515">
 					<style name="style_card" />
-					<lv_label text="Cycle">
+					<lv_label text="Profile Preview">
 						<style name="style_card_title" />
 					</lv_label>
 				</lv_obj>
 
-				<lv_label text="Selection profil" x="40" y="80">
+				<lv_label text="SELECT PROFILE" x="40" y="80">
 					<style name="style_card_title" />
 				</lv_label>
 
-				<lv_dropdown name="profile_dropdown" x="40" y="102" width="260" height="50" options="Chargement...">
+				<!-- Empty mount point - the actual lv_file_explorer widget is created
+				     here from C (profiles_ui_init), since it isn't a plain declarative
+				     widget with simple props like the other components in this file. -->
+				<lv_obj name="profile_explorer_container" x="40" y="100" width="300" height="410">
 					<style name="style_dropdown" />
-					<event_cb trigger="value_changed" callback="profile_dropdown_changed" />
-				</lv_dropdown>
+				</lv_obj>
 
 				<!-- Preview-only chart: redrawn from C whenever the dropdown
 				     selection changes. point_count/values below are placeholders,

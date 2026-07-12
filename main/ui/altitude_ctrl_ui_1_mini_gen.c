@@ -176,7 +176,6 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     lv_xml_register_event_cb(NULL, "slider_update_callback", slider_update_callback);
     lv_xml_register_event_cb(NULL, "pump_enable_callback", pump_enable_callback);
     lv_xml_register_event_cb(NULL, "pump_target_keypad_open", pump_target_keypad_open);
-    lv_xml_register_event_cb(NULL, "profile_dropdown_changed", profile_dropdown_changed);
 #endif
 
     /* Register all the global assets so that they won't be created again when globals.xml is parsed.
@@ -230,11 +229,6 @@ void __attribute__((weak)) pump_target_keypad_open(lv_event_t * e)
 {
     LV_UNUSED(e);
     LV_LOG("pump_target_keypad_open was called\n");
-}
-void __attribute__((weak)) profile_dropdown_changed(lv_event_t * e)
-{
-    LV_UNUSED(e);
-    LV_LOG("profile_dropdown_changed was called\n");
 }
 #endif
 

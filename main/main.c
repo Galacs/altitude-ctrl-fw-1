@@ -9,6 +9,10 @@
 #include "esp_lcd_touch.h"
 #include "esp_lcd_touch_gt911.h"
 #include "io_extension.h"
+#include "sd.h"
+
+#include <sys/stat.h>
+#include <stdlib.h>
 
 
 // #define LV_LVGL_H_INCLUDE_SIMPLE
@@ -192,7 +196,7 @@ void init_lvgl(void) {
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));   // <-- was missing: panel never started
  
     esp_lv_adapter_config_t cfg = ESP_LV_ADAPTER_DEFAULT_CONFIG();
-    // cfg.task_stack_size= 16 * 1024;
+    cfg.task_stack_size= 16 * 1024;
     ESP_ERROR_CHECK(esp_lv_adapter_init(&cfg));
  
     // Step 2: Register a display (choose macro by interface)
@@ -426,74 +430,119 @@ void pump_target_keypad_open(lv_event_t * e)
     lv_obj_add_event_cb(kb, keypad_event_cb, LV_EVENT_CANCEL, NULL);
 }
 
-typedef struct {
-    const char * name;
-    const int32_t * points;
-    size_t point_count;
-} altitude_profile_t;
- 
-static const int32_t profile_ascent_points[]  = { 0, 10, 25, 45, 60, 75, 85, 92, 97, 100 };
-static const int32_t profile_descent_points[] = { 100, 97, 90, 78, 60, 42, 25, 12, 4, 0 };
-static const int32_t profile_cycle_points[]   = { 0, 30, 60, 90, 100, 90, 60, 30, 10, 0 };
- 
-static const altitude_profile_t profiles[] = {
-    { "Mbnte", profile_ascent_points,  10 },
-    { "Descend", profile_descent_points, 10 },
-    { "Complet", profile_cycle_points,   10 },
-};
-#define PROFILE_COUNT (sizeof(profiles) / sizeof(profiles[0]))
+#define PROFILE_MAX_POINTS  256
+#define PROFILE_DIR_REAL    MOUNT_POINT "/profiles" /* real POSIX path, for stat()/mkdir() */
+#define PROFILE_DIR         "S:/profiles/"          /* what the file explorer browses (lv_fs path) */
+#define FS_DRIVE_PREFIX_LEN 2    
+
+static int32_t profile_points[PROFILE_MAX_POINTS];
+static size_t  profile_point_count = 0;
  
 extern lv_obj_t * parent; /* set in app_main after main_create() */
  
-/* Redraws the preview chart to show the given profile's curve */
-static void profile_chart_show(uint32_t index)
+static void profile_chart_redraw(void)
 {
-    if(index >= PROFILE_COUNT) return;
- 
     lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
     if(chart == NULL) return;
  
     lv_chart_series_t * ser = lv_chart_get_series_next(chart, NULL);
     if(ser == NULL) return;
  
-    const altitude_profile_t * p = &profiles[index];
- 
-    /* Resize the chart to match this profile's resolution - profiles don't
-       all need the same number of points */
-    lv_chart_set_point_count(chart, (uint32_t)p->point_count);
- 
-    for(size_t i = 0; i < p->point_count; i++) {
-        lv_chart_set_value_by_id(chart, ser, (uint16_t)i, p->points[i]);
+    lv_chart_set_point_count(chart, (uint32_t)profile_point_count);
+    for(size_t i = 0; i < profile_point_count; i++) {
+        lv_chart_set_value_by_id(chart, ser, (uint16_t)i, profile_points[i]);
     }
- 
     lv_chart_refresh(chart);
 }
  
-void profile_dropdown_changed(lv_event_t * e)
+static bool profile_load(const char * real_path)
 {
-    lv_obj_t * dd = lv_event_get_target(e);
-    uint32_t selected = lv_dropdown_get_selected(dd);
-    profile_chart_show(selected);
-}
+    FILE * f = fopen(real_path, "r");
+    if(f == NULL) {
+        LV_LOG_WARN("Could not open profile file: %s", real_path);
+        return false;
+    }
  
-void profiles_ui_init(void)
-{
-    lv_obj_t * dd = lv_obj_find_by_name(parent, "profile_dropdown");
-    if(dd == NULL) return;
- 
-    /* lv_dropdown wants one "\n"-joined string of options. Build it from
-       whatever storage you actually load profiles from - this loop over
-       the static placeholder array is the part to replace. */
-    char options[256] = { 0 };
-    for(size_t i = 0; i < PROFILE_COUNT; i++) {
-        strncat(options, profiles[i].name, sizeof(options) - strlen(options) - 1);
-        if(i != PROFILE_COUNT - 1) {
-            strncat(options, "\n", sizeof(options) - strlen(options) - 1);
+    profile_point_count = 0;
+    char line[32];
+    while(profile_point_count < PROFILE_MAX_POINTS && fgets(line, sizeof(line), f) != NULL) {
+        if(line[0] != '\0' && line[0] != '\r' && line[0] != '\n') {
+            profile_points[profile_point_count++] = (int32_t)atoi(line);
         }
     }
-    lv_dropdown_set_options(dd, options);
  
-    profile_chart_show(0); /* preview the first profile by default */
+    fclose(f);
+    return profile_point_count > 0;
+}
+ 
+/* Wired up as the file explorer's event handler, added in profiles_ui_init() */
+static void profile_explorer_event_cb(lv_event_t * e)
+{
+    if(lv_event_get_code(e) != LV_EVENT_VALUE_CHANGED) return;
+ 
+    lv_obj_t * explorer = lv_event_get_target(e);
+    const char * cur_path = lv_file_explorer_get_current_path(explorer);
+    const char * sel_fn   = lv_file_explorer_get_selected_file_name(explorer);
+ 
+    if(sel_fn == NULL || sel_fn[0] == '\0') return; /* nothing selected, e.g. "< Back" */
+    if(sel_fn[0] == '/') return;                    /* a leading '/' marks a directory, not a file */
+ 
+    /* cur_path looks like "S:/profiles/" - strip the "S:" driver-letter
+       prefix and prepend the real mount point so plain fopen() can use it */
+    char real_path[300];
+    lv_snprintf(real_path, sizeof(real_path), "%s%s%s",
+                MOUNT_POINT, cur_path + FS_DRIVE_PREFIX_LEN, sel_fn);
+ 
+    if(profile_load(real_path)) {
+        profile_chart_redraw();
+    }
+}
+ 
+/* Call once after the screen is created (see app_main), same place the
+   dropdown version's profiles_ui_init() was called. */
+void profiles_ui_init(void)
+{
+    lv_obj_t * container = lv_obj_find_by_name(parent, "profile_explorer_container");
+    if(container == NULL) return;
+ 
+    /* Guard #1: is the card actually mounted? If sd_mmc_init() wasn't
+       called (or failed, or was unmounted again afterwards), MOUNT_POINT
+       won't exist and handing the file explorer a path under it is what
+       triggered "Open dir error 3" -> crash. Show a message instead. */
+    struct stat st;
+    if(stat(MOUNT_POINT, &st) != 0) {
+        LV_LOG_ERROR("SD card not mounted at %s - profile explorer not created", MOUNT_POINT);
+        lv_obj_t * msg = lv_label_create(container);
+        lv_label_set_text(msg, "SD card not found");
+        lv_obj_center(msg);
+        return;
+    }
+ 
+    /* Guard #2: does the profiles subfolder exist? Same failure mode as
+       above if it doesn't - create it rather than handing the explorer a
+       path that doesn't exist yet. mkdir() failing here (e.g. it already
+       exists) is fine, we only cared about the not-mounted case above. */
+    if(stat(PROFILE_DIR_REAL, &st) != 0) {
+        mkdir(PROFILE_DIR_REAL, 0775);
+    }
+ 
+    lv_obj_t * explorer = lv_file_explorer_create(container);
+    lv_obj_set_size(explorer, LV_PCT(100), LV_PCT(100));
+    lv_file_explorer_set_sort(explorer, LV_EXPLORER_SORT_KIND);
+ 
+    /* "S:" is the lv_fs driver letter mapped to /sdcard - see the lv_conf.h
+       notes above. Point it at wherever your profile files actually live. */
+    lv_file_explorer_open_dir(explorer, PROFILE_DIR);
+ 
+    /* The explorer is likely being created while the Stats tab is still
+       hidden (this runs once at boot, from app_main). LVGL defers layout
+       for widgets that aren't visible yet, and lv_file_explorer's internal
+       flex-layout container (table + list) can end up with stale/zero
+       geometry if it's still waiting on a layout pass the first time the
+       tab is actually shown and drawn - forcing it now avoids that. */
+    lv_obj_update_layout(explorer);
+ 
+    lv_obj_add_event_cb(explorer, profile_explorer_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 }
 
 void app_main(void) {
@@ -502,6 +551,30 @@ void app_main(void) {
     ESP_LOGW(TAG, "%d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     init_lvgl();
     altitude_ctrl_ui_1_mini_init("");
+
+    // MMC init
+    char Total[100], Available[100]; // Buffers for formatted text
+    IO_EXTENSION_Output(IO_EXTENSION_IO_4, 1);  // Set CS (chip select) pin high
+        if (sd_mmc_init() == ESP_OK) // Initialize SD card
+    {
+        sd_card_print_info(); // Print SD card information to serial
+        size_t total, available; // Variables to store total and available space
+        read_sd_capacity(&total, &available); // Read SD card capacity
+        printf("Total:%d MB,Available:%d MB\r\n", (int)total / 1024, (int)available / 1024);
+
+        // Format total space into a human-readable string
+        if (((int)total / 1024) > 1024)
+            sprintf(Total, "Total:%d GB", (int)total / 1024 / 1024);
+        else
+            sprintf(Total, "Total:%d MB", (int)total / 1024);
+
+        // Format available space into a human-readable string
+        if (((int)available / 1024) > 1024)
+            sprintf(Available, "Available:%d GB", (int)available / 1024 / 1024);
+        else
+            sprintf(Available, "Available:%d MB", (int)available / 1024);
+    }
+
 
 
     if (esp_lv_adapter_lock(-1) == ESP_OK) {

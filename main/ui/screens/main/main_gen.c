@@ -216,24 +216,22 @@ lv_obj_t * main_create(void)
         lv_obj_set_height(lv_obj_3, 515);
         lv_obj_add_style(lv_obj_3, &style_card, 0);
         lv_obj_t * lv_label_4 = lv_label_create(lv_obj_3);
-        lv_label_set_text(lv_label_4, "Cycle");
+        lv_label_set_text(lv_label_4, "Profile Preview");
         lv_obj_add_style(lv_label_4, &style_card_title, 0);
 
         lv_obj_t * lv_label_5 = lv_label_create(lv_tabview_tab_1);
-        lv_label_set_text(lv_label_5, "Selection profil");
+        lv_label_set_text(lv_label_5, "SELECT PROFILE");
         lv_obj_set_x(lv_label_5, 40);
         lv_obj_set_y(lv_label_5, 80);
         lv_obj_add_style(lv_label_5, &style_card_title, 0);
 
-        lv_obj_t * profile_dropdown = lv_dropdown_create(lv_tabview_tab_1);
-        lv_obj_set_name(profile_dropdown, "profile_dropdown");
-        lv_obj_set_x(profile_dropdown, 40);
-        lv_obj_set_y(profile_dropdown, 102);
-        lv_obj_set_width(profile_dropdown, 260);
-        lv_obj_set_height(profile_dropdown, 50);
-        lv_dropdown_set_options(profile_dropdown, "Chargement...");
-        lv_obj_add_style(profile_dropdown, &style_dropdown, 0);
-        lv_obj_add_event_cb(profile_dropdown, profile_dropdown_changed, LV_EVENT_VALUE_CHANGED, NULL);
+        lv_obj_t * profile_explorer_container = lv_obj_create(lv_tabview_tab_1);
+        lv_obj_set_name(profile_explorer_container, "profile_explorer_container");
+        lv_obj_set_x(profile_explorer_container, 40);
+        lv_obj_set_y(profile_explorer_container, 100);
+        lv_obj_set_width(profile_explorer_container, 300);
+        lv_obj_set_height(profile_explorer_container, 410);
+        lv_obj_add_style(profile_explorer_container, &style_dropdown, 0);
 
         lv_obj_t * profile_preview_chart = lv_chart_create(lv_tabview_tab_1);
         lv_obj_set_name(profile_preview_chart, "profile_preview_chart");
