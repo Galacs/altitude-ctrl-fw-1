@@ -114,7 +114,7 @@ lv_obj_t * main_create(void)
         lv_obj_t * lv_tabview_0 = lv_tabview_create(lv_obj_0);
         lv_tabview_set_tab_bar_position(lv_tabview_0, LV_DIR_BOTTOM);
         lv_obj_set_align(lv_tabview_0, LV_ALIGN_CENTER);
-        lv_tabview_set_active(lv_tabview_0, 1, false);
+        lv_tabview_set_active(lv_tabview_0, 0, false);
         lv_obj_add_style(lv_tabview_0, &style_tv, 0);
         lv_obj_t * lv_tabview_tab_bar_0 = lv_tabview_get_tab_bar(lv_tabview_0);
         lv_obj_set_height(lv_tabview_tab_bar_0, 48);
@@ -225,10 +225,52 @@ lv_obj_t * main_create(void)
         lv_scale_set_mode(temperature_scale, LV_SCALE_MODE_ROUND_INNER);
         lv_scale_set_major_tick_every(temperature_scale, 5);
 
+        lv_obj_t * monitor_chart = lv_chart_create(lv_tabview_tab_0);
+        lv_obj_set_name(monitor_chart, "monitor_chart");
+        lv_obj_set_x(monitor_chart, 345);
+        lv_obj_set_y(monitor_chart, 15);
+        lv_obj_set_width(monitor_chart, 630);
+        lv_obj_set_height(monitor_chart, 310);
+        lv_chart_set_type(monitor_chart, LV_CHART_TYPE_LINE);
+        lv_chart_set_hor_div_line_count(monitor_chart, 5);
+        lv_chart_set_ver_div_line_count(monitor_chart, 6);
+        lv_obj_set_style_bg_color(monitor_chart, lv_color_hex(0x0f172a), 0);
+        lv_obj_set_style_bg_opa(monitor_chart, (255 * 100 / 100), 0);
+        lv_obj_set_style_border_color(monitor_chart, lv_color_hex(0x334155), 0);
+        lv_obj_set_style_border_width(monitor_chart, 1, 0);
+        lv_obj_set_style_pad_all(monitor_chart, 0, 0);
+        lv_obj_set_style_radius(monitor_chart, 0, 0);
+
+        lv_obj_t * monitor_y_axis = position_scale_create(lv_tabview_tab_0, &temperature, 130, 310, 10, 110);
+        lv_obj_set_name(monitor_y_axis, "monitor_y_axis");
+        lv_obj_set_x(monitor_y_axis, 215);
+        lv_obj_set_y(monitor_y_axis, 15);
+        lv_obj_set_style_bg_opa(monitor_y_axis, 0, 0);
+        lv_scale_set_mode(monitor_y_axis, LV_SCALE_MODE_VERTICAL_LEFT);
+        lv_scale_set_min_value(monitor_y_axis, 0);
+        lv_scale_set_max_value(monitor_y_axis, 0);
+        lv_scale_set_major_tick_every(monitor_y_axis, 5);
+        static const char *monitor_y_axis_text_src_0[] = {"10k", "35k", "60k", "85k", "110k", NULL};
+        lv_scale_set_text_src(monitor_y_axis, monitor_y_axis_text_src_0);
+        lv_obj_set_style_pad_all(monitor_y_axis, 0, 0);
+
+        lv_obj_t * monitor_x_axis = position_scale_create(lv_tabview_tab_0, &temperature, 630, 60, 10, 110);
+        lv_obj_set_name(monitor_x_axis, "monitor_x_axis");
+        lv_obj_set_x(monitor_x_axis, 345);
+        lv_obj_set_y(monitor_x_axis, 325);
+        lv_obj_set_style_bg_opa(monitor_x_axis, 0, 0);
+        lv_scale_set_mode(monitor_x_axis, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
+        lv_scale_set_min_value(monitor_x_axis, 0);
+        lv_scale_set_max_value(monitor_x_axis, 0);
+        lv_scale_set_major_tick_every(monitor_x_axis, 4);
+        lv_obj_set_style_pad_all(monitor_x_axis, 0, 0);
+        static const char *monitor_x_axis_text_src_0[] = {"-50m", "-40m", "-30m", "-20m", "-10m", "0", NULL};
+        lv_scale_set_text_src(monitor_x_axis, monitor_x_axis_text_src_0);
+
         lv_obj_t * lv_tabview_tab_1 = lv_tabview_add_tab(lv_tabview_0, "Stats");
         lv_obj_set_flag(lv_tabview_tab_1, LV_OBJ_FLAG_SCROLLABLE, false);
         lv_obj_t * lv_obj_4 = lv_obj_create(lv_tabview_tab_1);
-        lv_obj_set_x(lv_obj_4, 20);
+        lv_obj_set_x(lv_obj_4, 0);
         lv_obj_set_y(lv_obj_4, 0);
         lv_obj_set_width(lv_obj_4, 340);
         lv_obj_set_height(lv_obj_4, 325);
@@ -239,7 +281,7 @@ lv_obj_t * main_create(void)
 
         lv_obj_t * profile_explorer_container = lv_obj_create(lv_tabview_tab_1);
         lv_obj_set_name(profile_explorer_container, "profile_explorer_container");
-        lv_obj_set_x(profile_explorer_container, 40);
+        lv_obj_set_x(profile_explorer_container, 20);
         lv_obj_set_y(profile_explorer_container, 55);
         lv_obj_set_width(profile_explorer_container, 300);
         lv_obj_set_height(profile_explorer_container, 250);
@@ -247,7 +289,7 @@ lv_obj_t * main_create(void)
         lv_obj_add_style(profile_explorer_container, &style_dropdown, 0);
 
         lv_obj_t * lv_obj_5 = lv_obj_create(lv_tabview_tab_1);
-        lv_obj_set_x(lv_obj_5, 20);
+        lv_obj_set_x(lv_obj_5, 0);
         lv_obj_set_y(lv_obj_5, 340);
         lv_obj_set_width(lv_obj_5, 340);
         lv_obj_set_height(lv_obj_5, 170);
@@ -258,21 +300,21 @@ lv_obj_t * main_create(void)
 
         lv_obj_t * run_start_btn = button_create(lv_tabview_tab_1, "", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 70, 70);
         lv_obj_set_name(run_start_btn, "run_start_btn");
-        lv_obj_set_x(run_start_btn, 50);
+        lv_obj_set_x(run_start_btn, 30);
         lv_obj_set_y(run_start_btn, 390);
         lv_obj_add_style(run_start_btn, &style_card, 0);
         lv_obj_add_event_cb(run_start_btn, run_start_cb, LV_EVENT_CLICKED, NULL);
 
         lv_obj_t * run_pause_btn = button_create(lv_tabview_tab_1, "", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 70, 70);
         lv_obj_set_name(run_pause_btn, "run_pause_btn");
-        lv_obj_set_x(run_pause_btn, 150);
+        lv_obj_set_x(run_pause_btn, 130);
         lv_obj_set_y(run_pause_btn, 390);
         lv_obj_add_style(run_pause_btn, &style_card, 0);
         lv_obj_add_event_cb(run_pause_btn, run_pause_resume_cb, LV_EVENT_CLICKED, NULL);
 
         lv_obj_t * run_stop_btn = button_create(lv_tabview_tab_1, "", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 70, 70);
         lv_obj_set_name(run_stop_btn, "run_stop_btn");
-        lv_obj_set_x(run_stop_btn, 260);
+        lv_obj_set_x(run_stop_btn, 230);
         lv_obj_set_y(run_stop_btn, 390);
         lv_obj_add_style(run_stop_btn, &style_card, 0);
         lv_obj_add_event_cb(run_stop_btn, run_stop_cb, LV_EVENT_CLICKED, NULL);
@@ -280,15 +322,15 @@ lv_obj_t * main_create(void)
         lv_obj_t * run_state_label = lv_label_create(lv_tabview_tab_1);
         lv_obj_set_name(run_state_label, "run_state_label");
         lv_label_set_text(run_state_label, "Pret");
-        lv_obj_set_x(run_state_label, 45);
+        lv_obj_set_x(run_state_label, 35);
         lv_obj_set_y(run_state_label, 475);
         lv_obj_add_style(run_state_label, &style_pump_value, 0);
 
         lv_obj_t * run_elapsed_label = lv_label_create(lv_tabview_tab_1);
         lv_obj_set_name(run_elapsed_label, "run_elapsed_label");
         lv_label_set_text(run_elapsed_label, "00:00 / 00:00");
-        lv_obj_set_x(run_elapsed_label, 240);
-        lv_obj_set_y(run_elapsed_label, 475);
+        lv_obj_set_x(run_elapsed_label, 200);
+        lv_obj_set_y(run_elapsed_label, 480);
         lv_obj_add_style(run_elapsed_label, &style_card_title, 0);
 
         lv_obj_t * profile_preview_chart = lv_chart_create(lv_tabview_tab_1);
@@ -307,27 +349,29 @@ lv_obj_t * main_create(void)
         lv_obj_set_style_pad_all(profile_preview_chart, 0, 0);
         lv_obj_set_style_radius(profile_preview_chart, 0, 0);
 
-        lv_obj_t * preview_x_axis = position_scale_create(lv_tabview_tab_1, &temperature, 130, 470, 10, 110);
-        lv_obj_set_name(preview_x_axis, "preview_x_axis");
-        lv_obj_set_x(preview_x_axis, 270);
-        lv_obj_set_y(preview_x_axis, 20);
-        lv_obj_set_style_bg_opa(preview_x_axis, 0, 0);
-        lv_scale_set_mode(preview_x_axis, LV_SCALE_MODE_VERTICAL_LEFT);
-        lv_scale_set_min_value(preview_x_axis, 0);
-        lv_scale_set_max_value(preview_x_axis, 0);
-        lv_scale_set_major_tick_every(preview_x_axis, 5);
-        lv_obj_set_style_pad_all(preview_x_axis, 0, 0);
-
-        lv_obj_t * preview_y_axis = position_scale_create(lv_tabview_tab_1, &temperature, 580, 60, 10, 110);
+        lv_obj_t * preview_y_axis = position_scale_create(lv_tabview_tab_1, &temperature, 130, 470, 10, 110);
         lv_obj_set_name(preview_y_axis, "preview_y_axis");
-        lv_obj_set_x(preview_y_axis, 400);
-        lv_obj_set_y(preview_y_axis, 490);
+        lv_obj_set_x(preview_y_axis, 270);
+        lv_obj_set_y(preview_y_axis, 20);
         lv_obj_set_style_bg_opa(preview_y_axis, 0, 0);
-        lv_scale_set_mode(preview_y_axis, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
+        lv_scale_set_mode(preview_y_axis, LV_SCALE_MODE_VERTICAL_LEFT);
         lv_scale_set_min_value(preview_y_axis, 0);
         lv_scale_set_max_value(preview_y_axis, 0);
-        lv_scale_set_major_tick_every(preview_y_axis, 4);
+        static const char *preview_y_axis_text_src_0[] = {"10k", "35k", "60k", "85k", "110k", NULL};
+        lv_scale_set_text_src(preview_y_axis, preview_y_axis_text_src_0);
+        lv_scale_set_major_tick_every(preview_y_axis, 5);
         lv_obj_set_style_pad_all(preview_y_axis, 0, 0);
+
+        lv_obj_t * preview_x_axis = position_scale_create(lv_tabview_tab_1, &temperature, 580, 60, 10, 110);
+        lv_obj_set_name(preview_x_axis, "preview_x_axis");
+        lv_obj_set_x(preview_x_axis, 400);
+        lv_obj_set_y(preview_x_axis, 490);
+        lv_obj_set_style_bg_opa(preview_x_axis, 0, 0);
+        lv_scale_set_mode(preview_x_axis, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
+        lv_scale_set_min_value(preview_x_axis, 0);
+        lv_scale_set_max_value(preview_x_axis, 0);
+        lv_scale_set_major_tick_every(preview_x_axis, 4);
+        lv_obj_set_style_pad_all(preview_x_axis, 0, 0);
 
         lv_obj_t * lv_tabview_tab_2 = lv_tabview_add_tab(lv_tabview_0, "Export");
         lv_obj_set_flag(lv_tabview_tab_2, LV_OBJ_FLAG_SCROLLABLE, false);
