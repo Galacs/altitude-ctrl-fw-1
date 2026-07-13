@@ -108,6 +108,10 @@ void mon_callback_1(lv_event_t * e);
 void slider_update_callback(lv_event_t * e);
 void pump_enable_callback(lv_event_t * e);
 void pump_target_keypad_open(lv_event_t * e);
+void run_start_cb(lv_event_t * e);
+void run_pause_resume_cb(lv_event_t * e);
+void run_stop_cb(lv_event_t * e);
+void export_delete_selected_cb(lv_event_t * e);
 
 /**
  * Initialize the component library

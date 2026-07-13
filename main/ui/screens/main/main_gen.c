@@ -231,25 +231,65 @@ lv_obj_t * main_create(void)
         lv_obj_set_x(lv_obj_4, 20);
         lv_obj_set_y(lv_obj_4, 0);
         lv_obj_set_width(lv_obj_4, 340);
-        lv_obj_set_height(lv_obj_4, 515);
+        lv_obj_set_height(lv_obj_4, 325);
         lv_obj_add_style(lv_obj_4, &style_card, 0);
         lv_obj_t * lv_label_5 = lv_label_create(lv_obj_4);
-        lv_label_set_text(lv_label_5, "Profile Preview");
+        lv_label_set_text(lv_label_5, "Selection profil");
         lv_obj_add_style(lv_label_5, &style_card_title, 0);
-
-        lv_obj_t * lv_label_6 = lv_label_create(lv_tabview_tab_1);
-        lv_label_set_text(lv_label_6, "Choix profil");
-        lv_obj_set_x(lv_label_6, 40);
-        lv_obj_set_y(lv_label_6, 80);
-        lv_obj_add_style(lv_label_6, &style_card_title, 0);
 
         lv_obj_t * profile_explorer_container = lv_obj_create(lv_tabview_tab_1);
         lv_obj_set_name(profile_explorer_container, "profile_explorer_container");
         lv_obj_set_x(profile_explorer_container, 40);
-        lv_obj_set_y(profile_explorer_container, 100);
+        lv_obj_set_y(profile_explorer_container, 55);
         lv_obj_set_width(profile_explorer_container, 300);
-        lv_obj_set_height(profile_explorer_container, 400);
+        lv_obj_set_height(profile_explorer_container, 250);
+        lv_obj_set_style_pad_all(profile_explorer_container, 3, 0);
         lv_obj_add_style(profile_explorer_container, &style_dropdown, 0);
+
+        lv_obj_t * lv_obj_5 = lv_obj_create(lv_tabview_tab_1);
+        lv_obj_set_x(lv_obj_5, 20);
+        lv_obj_set_y(lv_obj_5, 340);
+        lv_obj_set_width(lv_obj_5, 340);
+        lv_obj_set_height(lv_obj_5, 170);
+        lv_obj_add_style(lv_obj_5, &style_card, 0);
+        lv_obj_t * lv_label_6 = lv_label_create(lv_obj_5);
+        lv_label_set_text(lv_label_6, "Jouer le profil");
+        lv_obj_add_style(lv_label_6, &style_card_title, 0);
+
+        lv_obj_t * run_start_btn = button_create(lv_tabview_tab_1, "", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 70, 70);
+        lv_obj_set_name(run_start_btn, "run_start_btn");
+        lv_obj_set_x(run_start_btn, 50);
+        lv_obj_set_y(run_start_btn, 390);
+        lv_obj_add_style(run_start_btn, &style_card, 0);
+        lv_obj_add_event_cb(run_start_btn, run_start_cb, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t * run_pause_btn = button_create(lv_tabview_tab_1, "", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 70, 70);
+        lv_obj_set_name(run_pause_btn, "run_pause_btn");
+        lv_obj_set_x(run_pause_btn, 150);
+        lv_obj_set_y(run_pause_btn, 390);
+        lv_obj_add_style(run_pause_btn, &style_card, 0);
+        lv_obj_add_event_cb(run_pause_btn, run_pause_resume_cb, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t * run_stop_btn = button_create(lv_tabview_tab_1, "", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 70, 70);
+        lv_obj_set_name(run_stop_btn, "run_stop_btn");
+        lv_obj_set_x(run_stop_btn, 260);
+        lv_obj_set_y(run_stop_btn, 390);
+        lv_obj_add_style(run_stop_btn, &style_card, 0);
+        lv_obj_add_event_cb(run_stop_btn, run_stop_cb, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t * run_state_label = lv_label_create(lv_tabview_tab_1);
+        lv_obj_set_name(run_state_label, "run_state_label");
+        lv_label_set_text(run_state_label, "Pret");
+        lv_obj_set_x(run_state_label, 45);
+        lv_obj_set_y(run_state_label, 475);
+        lv_obj_add_style(run_state_label, &style_pump_value, 0);
+
+        lv_obj_t * run_elapsed_label = lv_label_create(lv_tabview_tab_1);
+        lv_obj_set_name(run_elapsed_label, "run_elapsed_label");
+        lv_label_set_text(run_elapsed_label, "00:00 / 00:00");
+        lv_obj_set_x(run_elapsed_label, 240);
+        lv_obj_set_y(run_elapsed_label, 475);
+        lv_obj_add_style(run_elapsed_label, &style_card_title, 0);
 
         lv_obj_t * profile_preview_chart = lv_chart_create(lv_tabview_tab_1);
         lv_obj_set_name(profile_preview_chart, "profile_preview_chart");
@@ -273,6 +313,8 @@ lv_obj_t * main_create(void)
         lv_obj_set_y(preview_x_axis, 20);
         lv_obj_set_style_bg_opa(preview_x_axis, 0, 0);
         lv_scale_set_mode(preview_x_axis, LV_SCALE_MODE_VERTICAL_LEFT);
+        lv_scale_set_min_value(preview_x_axis, 0);
+        lv_scale_set_max_value(preview_x_axis, 0);
         lv_scale_set_major_tick_every(preview_x_axis, 5);
         lv_obj_set_style_pad_all(preview_x_axis, 0, 0);
 
@@ -282,15 +324,46 @@ lv_obj_t * main_create(void)
         lv_obj_set_y(preview_y_axis, 490);
         lv_obj_set_style_bg_opa(preview_y_axis, 0, 0);
         lv_scale_set_mode(preview_y_axis, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
+        lv_scale_set_min_value(preview_y_axis, 0);
+        lv_scale_set_max_value(preview_y_axis, 0);
         lv_scale_set_major_tick_every(preview_y_axis, 4);
         lv_obj_set_style_pad_all(preview_y_axis, 0, 0);
 
-        lv_obj_t * lv_tabview_tab_2 = lv_tabview_add_tab(lv_tabview_0, "About");
+        lv_obj_t * lv_tabview_tab_2 = lv_tabview_add_tab(lv_tabview_0, "Export");
         lv_obj_set_flag(lv_tabview_tab_2, LV_OBJ_FLAG_SCROLLABLE, false);
-        lv_obj_t * lv_label_7 = lv_label_create(lv_tabview_tab_2);
-        lv_label_set_text(lv_label_7, "Tab view organizes content into pages.");
-        lv_obj_set_width(lv_label_7, lv_pct(100));
-        lv_obj_add_style(lv_label_7, &style_card, 0);
+        lv_obj_t * lv_obj_6 = lv_obj_create(lv_tabview_tab_2);
+        lv_obj_set_x(lv_obj_6, 20);
+        lv_obj_set_y(lv_obj_6, 0);
+        lv_obj_set_width(lv_obj_6, 960);
+        lv_obj_set_height(lv_obj_6, 60);
+        lv_obj_add_style(lv_obj_6, &style_card, 0);
+        lv_obj_t * lv_label_7 = lv_label_create(lv_obj_6);
+        lv_label_set_text(lv_label_7, "Journaux de cycles (CSV, ecrits automatiquement sur la carte SD)");
+        lv_obj_add_style(lv_label_7, &style_card_title, 0);
+
+        lv_obj_t * export_explorer_container = lv_obj_create(lv_tabview_tab_2);
+        lv_obj_set_name(export_explorer_container, "export_explorer_container");
+        lv_obj_set_x(export_explorer_container, 20);
+        lv_obj_set_y(export_explorer_container, 80);
+        lv_obj_set_width(export_explorer_container, 960);
+        lv_obj_set_height(export_explorer_container, 380);
+        lv_obj_add_style(export_explorer_container, &style_dropdown, 0);
+
+        lv_obj_t * export_delete_btn = button_create(lv_tabview_tab_2, "Supprimer", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 45, 150);
+        lv_obj_set_name(export_delete_btn, "export_delete_btn");
+        lv_obj_set_x(export_delete_btn, 20);
+        lv_obj_set_y(export_delete_btn, 470);
+        lv_obj_add_style(export_delete_btn, &style_card, 0);
+        lv_obj_add_event_cb(export_delete_btn, export_delete_selected_cb, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t * lv_tabview_tab_3 = lv_tabview_add_tab(lv_tabview_0, "Vide");
+        lv_obj_set_flag(lv_tabview_tab_3, LV_OBJ_FLAG_SCROLLABLE, false);
+        lv_obj_t * lv_tabview_tab_4 = lv_tabview_add_tab(lv_tabview_0, "A propos");
+        lv_obj_set_flag(lv_tabview_tab_4, LV_OBJ_FLAG_SCROLLABLE, false);
+        lv_obj_t * lv_label_8 = lv_label_create(lv_tabview_tab_4);
+        lv_label_set_text(lv_label_8, "Tab view organizes content into pages.");
+        lv_obj_set_width(lv_label_8, lv_pct(100));
+        lv_obj_add_style(lv_label_8, &style_card, 0);
 
         lv_obj_t * lv_tabview_tab_bar_1 = lv_tabview_get_tab_bar(lv_tabview_0);
         lv_obj_set_height(lv_tabview_tab_bar_1, 48);
@@ -304,6 +377,12 @@ lv_obj_t * main_create(void)
         lv_obj_t * lv_tabview_tab_button_2 = lv_tabview_get_tab_button(lv_tabview_0, 2);
         lv_obj_add_style(lv_tabview_tab_button_2, &style_tabbar_btn, 0);
         lv_obj_add_style(lv_tabview_tab_button_2, &style_tabbar_btn_checked, LV_STATE_CHECKED);
+        lv_obj_t * lv_tabview_tab_button_3 = lv_tabview_get_tab_button(lv_tabview_0, 3);
+        lv_obj_add_style(lv_tabview_tab_button_3, &style_tabbar_btn, 0);
+        lv_obj_add_style(lv_tabview_tab_button_3, &style_tabbar_btn_checked, LV_STATE_CHECKED);
+        lv_obj_t * lv_tabview_tab_button_4 = lv_tabview_get_tab_button(lv_tabview_0, 4);
+        lv_obj_add_style(lv_tabview_tab_button_4, &style_tabbar_btn, 0);
+        lv_obj_add_style(lv_tabview_tab_button_4, &style_tabbar_btn_checked, LV_STATE_CHECKED);
 
         the_root = lv_obj_0;
     }

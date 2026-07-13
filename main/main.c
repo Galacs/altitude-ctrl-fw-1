@@ -270,6 +270,11 @@ void toggle_btn_callback(lv_event_t * e) {
 
 void pump_enable_callback(lv_event_t * e) {}
 
+void run_start_cb(lv_event_t * e) {}
+void run_pause_resume_cb(lv_event_t * e) {}
+void run_stop_cb(lv_event_t * e) {}
+void export_delete_selected_cb(lv_event_t * e) {}
+
 void from_comp_callback(lv_event_t * e) {
     ESP_LOGW(TAG, "from comp");
     // lv_obj_t *comp = lv_obj_find_by_name(parent, "comp_btn");
@@ -558,6 +563,7 @@ void profiles_ui_init(void)
     lv_obj_t * explorer = lv_file_explorer_create(container);
     lv_obj_set_size(explorer, LV_PCT(100), LV_PCT(100));
     lv_file_explorer_set_sort(explorer, LV_EXPLORER_SORT_KIND);
+    // lv_obj_set_style_bg_color(explorer, lv_color_hex(0x0f172a), 0); // Doesn't work
  
     /* "S:" is the lv_fs driver letter mapped to /sdcard - see the lv_conf.h
        notes above. Point it at wherever your profile files actually live. */

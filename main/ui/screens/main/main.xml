@@ -138,29 +138,43 @@
 			</lv_tabview-tab>
 
 			<lv_tabview-tab text="Stats" scrollable="false">
-				<lv_obj x="20" y="0" width="340" height="515">
+				<lv_obj x="20" y="0" width="340" height="325">
 					<style name="style_card" />
-					<lv_label text="Profile Preview">
+					<lv_label text="Selection profil">
 						<style name="style_card_title" />
 					</lv_label>
 				</lv_obj>
 
-				<lv_label text="Choix profil" x="40" y="80">
-					<style name="style_card_title" />
-				</lv_label>
-
-				<!-- Empty mount point - the actual lv_file_explorer widget is created
-				     here from C (profiles_ui_init), since it isn't a plain declarative
-				     widget with simple props like the other components in this file. -->
-				<lv_obj name="profile_explorer_container" x="40" y="100" width="300" height="400">
+				<lv_obj name="profile_explorer_container" x="40" y="55" width="300" height="250" style_pad_all="3">
 					<style name="style_dropdown" />
 				</lv_obj>
 
-				<!-- Preview-only chart: series/axes are set up once from C in
-				     profiles_ui_init() (scatter charts need their series bound
-				     to both X and Y axes at creation time, which isn't a
-				     simple prop like the other components here), then
-				     redrawn per-profile in profile_chart_redraw(). -->
+				<lv_obj x="20" y="340" width="340" height="170">
+					<style name="style_card" />
+					<lv_label text="Jouer le profil">
+						<style name="style_card_title" />
+					</lv_label>
+				</lv_obj>
+
+				<button name="run_start_btn" x="50" y="390" width="70" height="70" text="&#xF04B;">
+					<style name="style_card" />
+					<event_cb trigger="clicked" callback="run_start_cb" />
+				</button>
+				<button name="run_pause_btn" x="150" y="390" width="70" height="70" text="&#xF04C;">
+					<style name="style_card" />
+					<event_cb trigger="clicked" callback="run_pause_resume_cb" />
+				</button>
+				<button name="run_stop_btn" x="260" y="390" width="70" height="70" text="&#xF04D;">
+					<style name="style_card" />
+					<event_cb trigger="clicked" callback="run_stop_cb" />
+				</button>
+				<lv_label name="run_state_label" text="Pret" x="45" y="475">
+					<style name="style_pump_value" />
+				</lv_label>
+				<lv_label name="run_elapsed_label" text="00:00 / 00:00" x="240" y="475">
+					<style name="style_card_title" />
+				</lv_label>
+
 				<lv_chart
 					name="profile_preview_chart"
 					x="400"
@@ -187,6 +201,8 @@
 					width="130"
 					min="10"
 					max="110"
+					min_value="0"
+					max_value="0"
 					value_subject="temperature"
 					major_tick_every="5"
 					style_pad_all="0"
@@ -201,13 +217,38 @@
 					width="580"
 					min="10"
 					max="110"
+					min_value="0"
+					max_value="0"
 					value_subject="temperature"
 					major_tick_every="4"
 					style_pad_all="0"
 				/>
 			</lv_tabview-tab>
 
-			<lv_tabview-tab text="About" scrollable="false">
+			<lv_tabview-tab text="Export" scrollable="false">
+				<lv_obj x="20" y="0" width="960" height="60">
+					<style name="style_card" />
+					<lv_label text="Journaux de cycles (CSV, ecrits automatiquement sur la carte SD)">
+						<style name="style_card_title" />
+					</lv_label>
+				</lv_obj>
+
+				<!-- Empty mount point - the lv_file_explorer widget itself is
+				     created from C (export_ui_init), same pattern as
+				     profile_explorer_container on the Stats tab. -->
+				<lv_obj name="export_explorer_container" x="20" y="80" width="960" height="380">
+					<style name="style_dropdown" />
+				</lv_obj>
+
+				<button name="export_delete_btn" x="20" y="470" width="150" height="45" text="Supprimer">
+					<style name="style_card" />
+					<event_cb trigger="clicked" callback="export_delete_selected_cb" />
+				</button>
+			</lv_tabview-tab>
+
+			<lv_tabview-tab text="Vide" scrollable="false" />
+
+			<lv_tabview-tab text="A propos" scrollable="false">
 				<lv_label text="Tab view organizes content into pages." width="100%">
 					<style name="style_card" />
 				</lv_label>
@@ -226,6 +267,16 @@
 			</lv_tabview-tab_button>
 
 			<lv_tabview-tab_button index="2">
+				<style name="style_tabbar_btn" />
+				<style name="style_tabbar_btn_checked" selector="checked" />
+			</lv_tabview-tab_button>
+
+			<lv_tabview-tab_button index="3">
+				<style name="style_tabbar_btn" />
+				<style name="style_tabbar_btn_checked" selector="checked" />
+			</lv_tabview-tab_button>
+
+			<lv_tabview-tab_button index="4">
 				<style name="style_tabbar_btn" />
 				<style name="style_tabbar_btn_checked" selector="checked" />
 			</lv_tabview-tab_button>
