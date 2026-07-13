@@ -206,10 +206,6 @@ void profiles_ui_init(void)
         return;
     }
  
-    /* Guard #2: does the profiles subfolder exist? Same failure mode as
-       above if it doesn't - create it rather than handing the explorer a
-       path that doesn't exist yet. mkdir() failing here (e.g. it already
-       exists) is fine, we only cared about the not-mounted case above. */
     if(stat(PROFILE_DIR_REAL, &st) != 0) {
         mkdir(PROFILE_DIR_REAL, 0775);
     }
@@ -223,18 +219,37 @@ void profiles_ui_init(void)
     lv_obj_t * explorer = lv_file_explorer_create(container);
     lv_obj_set_size(explorer, LV_PCT(100), LV_PCT(100));
     lv_file_explorer_set_sort(explorer, LV_EXPLORER_SORT_KIND);
-    // lv_obj_set_style_bg_color(explorer, lv_color_hex(0x0f172a), 0); // Doesn't work
+
+
+    lv_obj_t * header = lv_file_explorer_get_header(explorer);
+    if(header != NULL) {
+        lv_obj_set_style_bg_color(header, lv_color_hex(0x0f172a), 0);
+        lv_obj_set_style_bg_opa(header, LV_OPA_100, 0);
+        lv_obj_set_style_border_width(header, 0, 0);
+    }
+
+    lv_obj_t * path_label = lv_file_explorer_get_path_label(explorer);
+    if(path_label != NULL) {
+        lv_obj_set_style_text_color(path_label, lv_color_hex(0x94a3b8), 0);
+    }
+
+    lv_obj_t * table = lv_file_explorer_get_file_table(explorer);
+    if(table != NULL) {
+        lv_obj_set_style_bg_color(table, lv_color_hex(0x0f172a), 0);
+        lv_obj_set_style_bg_opa(table, LV_OPA_100, 0);
+        lv_obj_set_style_border_width(table, 0, 0);
+
+        lv_obj_set_style_bg_color(table, lv_color_hex(0x0f172a), LV_PART_ITEMS);
+        lv_obj_set_style_bg_opa(table, LV_OPA_100, LV_PART_ITEMS);
+        lv_obj_set_style_text_color(table, lv_color_white(), LV_PART_ITEMS);
+        lv_obj_set_style_border_color(table, lv_color_hex(0x334155), LV_PART_ITEMS);
+        lv_obj_set_style_border_width(table, 1, LV_PART_ITEMS);
+
+        lv_obj_set_style_bg_color(table, lv_color_hex(0x1e293b), LV_PART_ITEMS | LV_STATE_PRESSED);
+        lv_obj_set_style_bg_opa(table, LV_OPA_100, LV_PART_ITEMS | LV_STATE_PRESSED);
+    }
  
-    /* "S:" is the lv_fs driver letter mapped to /sdcard - see the lv_conf.h
-       notes above. Point it at wherever your profile files actually live. */
     lv_file_explorer_open_dir(explorer, PROFILE_DIR);
- 
-    /* The explorer is likely being created while the Stats tab is still
-       hidden (this runs once at boot, from app_main). LVGL defers layout
-       for widgets that aren't visible yet, and lv_file_explorer's internal
-       flex-layout container (table + list) can end up with stale/zero
-       geometry if it's still waiting on a layout pass the first time the
-       tab is actually shown and drawn - forcing it now avoids that. */
     lv_obj_update_layout(explorer);
  
     lv_obj_add_event_cb(explorer, profile_explorer_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
