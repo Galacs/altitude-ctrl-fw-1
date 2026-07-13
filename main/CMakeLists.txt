@@ -5,7 +5,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/ui/component_lib_list_gen.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/ui/file_list_gen.cmake)
 # add_library(lib-ui ${LV_EDITOR_PROJECT_SOURCES})
 
-idf_component_register(SRCS "sd.c" "main.c" "can_manager.c" "io_extension.c" "i2c.c" "gpio.c" ${LV_EDITOR_PROJECT_SOURCES}
+idf_component_register(SRCS "display.c" "sd.c" "main.c" "can_manager.c" "io_extension.c" "i2c.c" "gpio.c" ${LV_EDITOR_PROJECT_SOURCES}
                     INCLUDE_DIRS ".")
 
 target_compile_definitions(${COMPONENT_TARGET} PRIVATE LV_LVGL_H_INCLUDE_SIMPLE)
