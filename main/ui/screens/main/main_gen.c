@@ -145,7 +145,7 @@ lv_obj_t * main_create(void)
         lv_obj_set_name(valve_en_btn, "valve_en_btn");
         lv_obj_set_y(valve_en_btn, 335);
         lv_obj_set_x(valve_en_btn, 30);
-        lv_obj_add_event_cb(valve_en_btn, mon_callback_1, LV_EVENT_PRESSED, NULL);
+        lv_obj_add_event_cb(valve_en_btn, valve_en_cb, LV_EVENT_PRESSED, NULL);
 
         lv_obj_t * valve_slider = control_slider_create(lv_tabview_tab_0, &valve_target, 0, 100, 80, 350);
         lv_obj_set_name(valve_slider, "valve_slider");

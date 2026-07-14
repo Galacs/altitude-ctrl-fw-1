@@ -48,7 +48,7 @@
 					<event_cb trigger="pressed" callback="mon_callback_1" />
 				</button>
 				<toggle_button name="valve_en_btn" height="80" width="80" y="335" x="30" text="&#xF0E7;">
-					<event_cb trigger="pressed" callback="mon_callback_1" />
+					<event_cb trigger="pressed" callback="valve_en_cb" />
 				</toggle_button>
 
 				<control_slider name="valve_slider" bind_value="valve_target" y="70" x="160" height="350">

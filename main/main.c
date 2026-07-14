@@ -6,6 +6,7 @@
 #include "sd.h"
 #include "display.h"
 #include "keypad.h"
+#include "can_manager.h"
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -20,10 +21,9 @@
 
 static const char *TAG = "main";
 
+can_manager_t can_mgr;
 
 lv_obj_t* parent = NULL;
-
-#include "can_manager.h"
 
 CAN_STRUCT(HeartbeatMsg, 0x200,
     uint8_t  counter;
@@ -84,6 +84,13 @@ void mon_callback_1(lv_event_t * e) {
     lv_obj_add_state(home_btn, LV_STATE_USER_1);
     lv_obj_t * valve_auto_btn = lv_obj_find_by_name(parent, "valve_auto_btn");
     lv_obj_set_state(valve_auto_btn, LV_STATE_CHECKED, false);
+}
+
+void valve_en_cb(lv_event_t * e) {
+    lv_obj_t * btn = lv_event_get_target(e);
+    StepperEnMSG msg;
+    msg.en = !lv_obj_has_state(btn, LV_STATE_CHECKED);
+    CAN_SEND_STRUCT(&can_mgr, StepperEnMSG, msg);
 }
 
 void slider_update_callback(lv_event_t * e) {
@@ -325,7 +332,6 @@ void app_main(void) {
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
 
-    can_manager_t can_mgr;
     // IO_EXTENSION_Output(IO_EXTENSION_IO_5, 1);
     vTaskDelay(pdMS_TO_TICKS(10));
     if (!can_manager_init(&can_mgr, GPIO_NUM_20, GPIO_NUM_19, 100000)) {
@@ -336,10 +342,6 @@ void app_main(void) {
     can_manager_register_callback(&can_mgr, SensorsAMsg_CAN_ID, on_sensors_a);
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
-
-    StepperEnMSG msg;
-    msg.en = true;
-    CAN_SEND_STRUCT(&can_mgr, StepperEnMSG, msg);
 
     while (1) {
         can_manager_update(&can_mgr);   // dispatches all received frames

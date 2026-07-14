@@ -169,6 +169,7 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
 
     /* Register callbacks */
     lv_xml_register_event_cb(NULL, "mon_callback_1", mon_callback_1);
+    lv_xml_register_event_cb(NULL, "valve_en_cb", valve_en_cb);
     lv_xml_register_event_cb(NULL, "slider_update_callback", slider_update_callback);
     lv_xml_register_event_cb(NULL, "pump_enable_callback", pump_enable_callback);
     lv_xml_register_event_cb(NULL, "pump_target_keypad_open", pump_target_keypad_open);
@@ -214,6 +215,11 @@ void __attribute__((weak)) mon_callback_1(lv_event_t * e)
 {
     LV_UNUSED(e);
     LV_LOG("mon_callback_1 was called\n");
+}
+void __attribute__((weak)) valve_en_cb(lv_event_t * e)
+{
+    LV_UNUSED(e);
+    LV_LOG("valve_en_cb was called\n");
 }
 void __attribute__((weak)) slider_update_callback(lv_event_t * e)
 {
