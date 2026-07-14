@@ -23,17 +23,17 @@ static const char *TAG = "main";
 
 lv_obj_t* parent = NULL;
 
-// #include "can_manager.h"
+#include "can_manager.h"
 
-// CAN_STRUCT(HeartbeatMsg, 0x200,
-//     uint8_t  counter;
-//     uint16_t checksum;
-// );
+CAN_STRUCT(HeartbeatMsg, 0x200,
+    uint8_t  counter;
+    uint16_t checksum;
+);
 
-// void on_heartbeat(const can_frame_t *frame) {
-//     const HeartbeatMsg *msg = (const HeartbeatMsg *)frame->data;
-//     ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
-// }
+void on_heartbeat(const can_frame_t *frame) {
+    const HeartbeatMsg *msg = (const HeartbeatMsg *)frame->data;
+    ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
+}
 
 
 static void add_data(lv_timer_t * t)
@@ -300,24 +300,24 @@ void app_main(void) {
     vTaskDelay(pdMS_TO_TICKS(500));
     IO_EXTENSION_Output(IO_EXTENSION_IO_2, 1);  // Backlight ON configuration
 
-
-    // can_manager_t can_mgr;
-
-
-    // if (!can_manager_init(&can_mgr, GPIO_NUM_21, GPIO_NUM_20, 500000)) {
-    //     ESP_LOGE("APP", "CAN init failed");
-    //     return;
-    // }
-
-    // can_manager_register_callback(&can_mgr, HeartbeatMsg_CAN_ID, on_heartbeat);
-
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
 
-    // while (1) {
-    //     can_manager_update(&can_mgr);   // dispatches all received frames
-    //     vTaskDelay(pdMS_TO_TICKS(10));
-    // }
+    can_manager_t can_mgr;
+    IO_EXTENSION_Output(IO_EXTENSION_IO_5, 1);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    if (!can_manager_init(&can_mgr, GPIO_NUM_20, GPIO_NUM_19, 100000)) {
+        ESP_LOGE("APP", "CAN init failed");
+        return;
+    }
+    can_manager_register_callback(&can_mgr, HeartbeatMsg_CAN_ID, on_heartbeat);
+    // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
+    // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
+
+    while (1) {
+        can_manager_update(&can_mgr);   // dispatches all received frames
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
     printf("Hello world!\n");
     while(1) {
         // lv_timer_handler();

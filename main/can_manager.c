@@ -3,6 +3,8 @@
 
 #include "can_manager.h"
 
+static const char *TAG = "CAN_MANAGER";
+
 #define RX_QUEUE_LENGTH  20   /* number of can_frame_t slots */
 
 /* -------------------------------------------------------------------------- */
@@ -54,8 +56,8 @@ bool can_manager_init(can_manager_t *mgr, gpio_num_t tx_pin, gpio_num_t rx_pin, 
         .io_cfg.bus_off_indicator = GPIO_NUM_NC,
         .bit_timing.bitrate = bitrate,
         .tx_queue_depth = 10,
-        .flags.enable_loopback = true,
-        .flags.enable_self_test = true,
+        // .flags.enable_self_test = true,
+        // .flags.enable_loopback  = true,
     };
 
     esp_err_t err = twai_new_node_onchip(&node_config, &mgr->node);

@@ -15,7 +15,6 @@ extern "C" {
 #endif
 
 #define CALLBACKS_NUMBER   10
-#define TAG                "CAN_MANAGER"
 
 /* ---------- CAN frame representation ---------- */
 typedef struct {
