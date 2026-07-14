@@ -34,18 +34,18 @@ CAN_STRUCT(SensorsAMsg, 0x201,
     float pressure;
     float temperature;
 );
-
 CAN_STRUCT(StepperEnMSG, 0x202,
     bool en;
 );
-
 CAN_STRUCT(StepperStatusMsg, 0x203,
     uint16_t sg_res;
     bool en;
 );
-
 CAN_STRUCT(ValvePoseMsg, 0x204,
     float valve_pose; // 0-100
+);
+CAN_STRUCT(HomeMsg, 0x205,
+    bool homed;
 );
 
 void on_heartbeat(const can_frame_t *frame) {
@@ -98,6 +98,10 @@ void mon_callback_1(lv_event_t * e) {
     lv_obj_add_state(home_btn, LV_STATE_USER_1);
     lv_obj_t * valve_auto_btn = lv_obj_find_by_name(parent, "valve_auto_btn");
     lv_obj_set_state(valve_auto_btn, LV_STATE_CHECKED, false);
+
+    HomeMsg msg;
+    msg.homed = true;
+    CAN_SEND_STRUCT(&can_mgr, HomeMsg, msg);
 }
 
 void valve_en_cb(lv_event_t * e) {
