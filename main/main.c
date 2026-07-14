@@ -30,9 +30,26 @@ CAN_STRUCT(HeartbeatMsg, 0x200,
     uint16_t checksum;
 );
 
+CAN_STRUCT(SensorsAMsg, 0x201,
+    float pressure;
+    float temperature;
+);
+
 void on_heartbeat(const can_frame_t *frame) {
     const HeartbeatMsg *msg = (const HeartbeatMsg *)frame->data;
     ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
+}
+
+void on_sensors_a(const can_frame_t *frame) {
+    const SensorsAMsg *msg = (const SensorsAMsg *)frame->data;
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        lv_subject_set_int(&pump_pressure, (int) msg->pressure);
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.1f kPa", msg->pressure);
+        lv_subject_copy_string(&pump_pressure_text, buf);
+        esp_lv_adapter_unlock();
+    }
+    // ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
 }
 
 
@@ -311,6 +328,7 @@ void app_main(void) {
         return;
     }
     can_manager_register_callback(&can_mgr, HeartbeatMsg_CAN_ID, on_heartbeat);
+    can_manager_register_callback(&can_mgr, SensorsAMsg_CAN_ID, on_sensors_a);
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
 
