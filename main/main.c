@@ -35,6 +35,10 @@ CAN_STRUCT(SensorsAMsg, 0x201,
     float temperature;
 );
 
+CAN_STRUCT(StepperEnMSG, 0x202,
+    bool en;
+);
+
 void on_heartbeat(const can_frame_t *frame) {
     const HeartbeatMsg *msg = (const HeartbeatMsg *)frame->data;
     ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
@@ -44,6 +48,7 @@ void on_sensors_a(const can_frame_t *frame) {
     const SensorsAMsg *msg = (const SensorsAMsg *)frame->data;
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         lv_subject_set_int(&pump_pressure, (int) msg->pressure);
+        lv_subject_set_int(&temperature, (int) msg->temperature);
         char buf[32];
         snprintf(buf, sizeof(buf), "%.1f kPa", msg->pressure);
         lv_subject_copy_string(&pump_pressure_text, buf);
@@ -321,7 +326,7 @@ void app_main(void) {
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
 
     can_manager_t can_mgr;
-    IO_EXTENSION_Output(IO_EXTENSION_IO_5, 1);
+    // IO_EXTENSION_Output(IO_EXTENSION_IO_5, 1);
     vTaskDelay(pdMS_TO_TICKS(10));
     if (!can_manager_init(&can_mgr, GPIO_NUM_20, GPIO_NUM_19, 100000)) {
         ESP_LOGE("APP", "CAN init failed");
@@ -331,6 +336,10 @@ void app_main(void) {
     can_manager_register_callback(&can_mgr, SensorsAMsg_CAN_ID, on_sensors_a);
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
+
+    StepperEnMSG msg;
+    msg.en = true;
+    CAN_SEND_STRUCT(&can_mgr, StepperEnMSG, msg);
 
     while (1) {
         can_manager_update(&can_mgr);   // dispatches all received frames
