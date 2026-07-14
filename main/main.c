@@ -39,6 +39,15 @@ CAN_STRUCT(StepperEnMSG, 0x202,
     bool en;
 );
 
+CAN_STRUCT(StepperStatusMsg, 0x203,
+    uint16_t sg_res;
+    bool en;
+);
+
+CAN_STRUCT(ValvePoseMsg, 0x204,
+    float valve_pose; // 0-100
+);
+
 void on_heartbeat(const can_frame_t *frame) {
     const HeartbeatMsg *msg = (const HeartbeatMsg *)frame->data;
     ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
@@ -55,6 +64,11 @@ void on_sensors_a(const can_frame_t *frame) {
         esp_lv_adapter_unlock();
     }
     // ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
+}
+
+void on_stepper_status(const can_frame_t *frame) {
+    const StepperStatusMsg *msg = (const StepperStatusMsg*) frame->data;
+    ESP_LOGW(TAG, "stallguard status: %d", msg->sg_res);
 }
 
 
@@ -98,6 +112,9 @@ void slider_update_callback(lv_event_t * e) {
     int32_t value = lv_slider_get_value(slider);
     lv_subject_set_int(&valve_pose, value);
     ESP_LOGW(TAG, "valeur updated: %ld", (long)value);
+    ValvePoseMsg msg;
+    msg.valve_pose = value;
+    CAN_SEND_STRUCT(&can_mgr, ValvePoseMsg, msg);
 }
 
 void toggle_btn_callback(lv_event_t * e) {
@@ -340,6 +357,7 @@ void app_main(void) {
     }
     can_manager_register_callback(&can_mgr, HeartbeatMsg_CAN_ID, on_heartbeat);
     can_manager_register_callback(&can_mgr, SensorsAMsg_CAN_ID, on_sensors_a);
+    can_manager_register_callback(&can_mgr, StepperStatusMsg_CAN_ID, on_stepper_status);
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
 
