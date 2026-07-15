@@ -51,11 +51,12 @@ CAN_STRUCT(HomeMsg, 0x205,
 
 void on_heartbeat(const can_frame_t *frame) {
     const HeartbeatMsg *msg = (const HeartbeatMsg *)frame->data;
-    ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
+    // ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
 }
 
 void on_sensors_a(const can_frame_t *frame) {
     const SensorsAMsg *msg = (const SensorsAMsg *)frame->data;
+    ESP_LOGW(TAG, "température: %f", msg->temperature);
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         lv_subject_set_int(&pump_pressure, (int) msg->pressure);
         lv_subject_set_int(&temperature, (int) msg->temperature);
@@ -107,7 +108,7 @@ void valve_home_cb(lv_event_t * e) {
     msg.homed = true;
     CAN_SEND_STRUCT(&can_mgr, HomeMsg, msg);
     lv_obj_t * home_btn = lv_obj_find_by_name(parent, "valve_home_btn");
-    lv_obj_remove_flag(home_btn, LV_STATE_USER_1);
+    lv_obj_remove_flag(home_btn, LV_STATE_USER_1); // Marche pas
 }
 
 void mon_callback_1(lv_event_t * e) {
