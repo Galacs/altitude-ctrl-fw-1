@@ -191,7 +191,7 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     lv_xml_register_subject(NULL, "pump_pressure_text", &pump_pressure_text);
 
     /* Register callbacks */
-    lv_xml_register_event_cb(NULL, "mon_callback_1", mon_callback_1);
+    lv_xml_register_event_cb(NULL, "valve_auto_cb", valve_auto_cb);
     lv_xml_register_event_cb(NULL, "valve_home_cb", valve_home_cb);
     lv_xml_register_event_cb(NULL, "valve_en_cb", valve_en_cb);
     lv_xml_register_event_cb(NULL, "slider_update_callback", slider_update_callback);
@@ -235,10 +235,10 @@ bool altitude_ctrl_ui_1_mini_check_target(uint32_t target)
 
 /* Callbacks */
 #if defined(LV_EDITOR_PREVIEW)
-void __attribute__((weak)) mon_callback_1(lv_event_t * e)
+void __attribute__((weak)) valve_auto_cb(lv_event_t * e)
 {
     LV_UNUSED(e);
-    LV_LOG("mon_callback_1 was called\n");
+    LV_LOG("valve_auto_cb was called\n");
 }
 void __attribute__((weak)) valve_home_cb(lv_event_t * e)
 {

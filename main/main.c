@@ -26,6 +26,7 @@ can_manager_t can_mgr;
 float pressure = 100.0;
 float current_pose = 0.0;
 float target_pressure = 0.0;
+bool auto_enabled = false;
 void set_valve_pose(float pose);
 
 lv_obj_t* parent = NULL;
@@ -135,12 +136,9 @@ void valve_home_cb(lv_event_t * e) {
     lv_obj_remove_flag(home_btn, LV_STATE_USER_1); // Marche pas
 }
 
-void mon_callback_1(lv_event_t * e) {
-    ESP_LOGW(TAG, "ca call");
-    // lv_subject_copy_string(&txt_btn_stepper_en, "active");
-
-    lv_obj_t * valve_auto_btn = lv_obj_find_by_name(parent, "valve_auto_btn");
-    lv_obj_set_state(valve_auto_btn, LV_STATE_CHECKED, false);
+void valve_auto_cb(lv_event_t * e) {
+    lv_obj_t * btn = lv_event_get_target(e);
+    auto_enabled = !lv_obj_has_state(btn, LV_STATE_CHECKED);
 }
 
 void valve_en_cb(lv_event_t * e) {

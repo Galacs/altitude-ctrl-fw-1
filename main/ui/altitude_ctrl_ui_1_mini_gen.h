@@ -107,7 +107,7 @@ extern lv_subject_t pump_pressure_text;
  * Event Callbacks
  *----------------*/
 
-void mon_callback_1(lv_event_t * e);
+void valve_auto_cb(lv_event_t * e);
 void valve_home_cb(lv_event_t * e);
 void valve_en_cb(lv_event_t * e);
 void slider_update_callback(lv_event_t * e);

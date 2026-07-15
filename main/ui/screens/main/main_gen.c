@@ -133,7 +133,7 @@ lv_obj_t * main_create(void)
         lv_obj_set_name(valve_auto_btn, "valve_auto_btn");
         lv_obj_set_y(valve_auto_btn, 75);
         lv_obj_set_x(valve_auto_btn, 30);
-        lv_obj_add_event_cb(valve_auto_btn, mon_callback_1, LV_EVENT_PRESSED, NULL);
+        lv_obj_add_event_cb(valve_auto_btn, valve_auto_cb, LV_EVENT_PRESSED, NULL);
 
         lv_obj_t * home_value = lv_label_create(lv_tabview_tab_0);
         lv_obj_set_name(home_value, "home_value");
