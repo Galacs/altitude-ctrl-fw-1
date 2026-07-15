@@ -92,6 +92,7 @@ extern lv_subject_t txt_btn_stepper_en;
 extern lv_subject_t valve_pose;
 extern lv_subject_t valve_target;
 extern lv_subject_t temperature;
+extern lv_subject_t home_value_text;
 extern lv_subject_t pump_target_text;
 extern lv_subject_t pump_pressure;
 extern lv_subject_t pump_pressure_text;

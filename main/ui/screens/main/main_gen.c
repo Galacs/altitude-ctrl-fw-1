@@ -135,6 +135,14 @@ lv_obj_t * main_create(void)
         lv_obj_set_x(valve_auto_btn, 30);
         lv_obj_add_event_cb(valve_auto_btn, mon_callback_1, LV_EVENT_PRESSED, NULL);
 
+        lv_obj_t * home_value = lv_label_create(lv_tabview_tab_0);
+        lv_obj_set_name(home_value, "home_value");
+        lv_obj_set_x(home_value, 60);
+        lv_obj_set_y(home_value, 180);
+        lv_obj_set_width(home_value, 220);
+        lv_label_bind_text(home_value, &home_value_text, NULL);
+        lv_obj_add_style(home_value, &style_pump_value, 0);
+
         lv_obj_t * valve_home_btn = button_create(lv_tabview_tab_0, "", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 80, 80);
         lv_obj_set_name(valve_home_btn, "valve_home_btn");
         lv_obj_set_y(valve_home_btn, 205);

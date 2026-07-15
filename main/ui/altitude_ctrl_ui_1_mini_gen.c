@@ -77,6 +77,7 @@ lv_subject_t txt_btn_stepper_en;
 lv_subject_t valve_pose;
 lv_subject_t valve_target;
 lv_subject_t temperature;
+lv_subject_t home_value_text;
 lv_subject_t pump_target_text;
 lv_subject_t pump_pressure;
 lv_subject_t pump_pressure_text;
@@ -125,6 +126,14 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     lv_subject_init_int(&valve_pose, 50);
     lv_subject_init_int(&valve_target, 50);
     lv_subject_init_int(&temperature, 35);
+    static char home_value_text_buf[UI_SUBJECT_STRING_LENGTH];
+    static char home_value_text_prev_buf[UI_SUBJECT_STRING_LENGTH];
+    lv_subject_init_string(&home_value_text,
+                           home_value_text_buf,
+                           home_value_text_prev_buf,
+                           UI_SUBJECT_STRING_LENGTH,
+                           "xx"
+                          );
     static char pump_target_text_buf[UI_SUBJECT_STRING_LENGTH];
     static char pump_target_text_prev_buf[UI_SUBJECT_STRING_LENGTH];
     lv_subject_init_string(&pump_target_text,
@@ -163,6 +172,7 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     lv_xml_register_subject(NULL, "valve_pose", &valve_pose);
     lv_xml_register_subject(NULL, "valve_target", &valve_target);
     lv_xml_register_subject(NULL, "temperature", &temperature);
+    lv_xml_register_subject(NULL, "home_value_text", &home_value_text);
     lv_xml_register_subject(NULL, "pump_target_text", &pump_target_text);
     lv_xml_register_subject(NULL, "pump_pressure", &pump_pressure);
     lv_xml_register_subject(NULL, "pump_pressure_text", &pump_pressure_text);

@@ -16,6 +16,7 @@
 		<int name="valve_pose" value="50" />
 		<int name="valve_target" value="50" />
 		<int name="temperature" value="35" />
+		<string name="home_value_text" value="xx" />
 		<string name="pump_target_text" value="pression" />
 		<int name="pump_pressure" value="50" />
 		<string name="pump_pressure_text" value="pression" />

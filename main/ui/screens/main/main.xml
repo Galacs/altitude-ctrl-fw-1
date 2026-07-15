@@ -44,6 +44,9 @@
 				<toggle_button name="valve_auto_btn" y="75" x="30" height="80" width="80" text="&#xF074;">
 					<event_cb trigger="pressed" callback="mon_callback_1" />
 				</toggle_button>
+				<lv_label name="home_value" x="60" y="180" width="220" bind_text="home_value_text">
+					<style name="style_pump_value" />
+				</lv_label>
 				<button name="valve_home_btn" y="205" x="30" height="80" width="80" text="&#xF015;">
 					<event_cb trigger="pressed" callback="valve_home_cb" />
 				</button>

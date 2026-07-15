@@ -46,6 +46,7 @@ CAN_STRUCT(ValvePoseMsg, 0x204,
 );
 CAN_STRUCT(HomeMsg, 0x205,
     bool homed;
+    uint32_t value;
 );
 
 void on_heartbeat(const can_frame_t *frame) {
@@ -76,6 +77,9 @@ void on_valve_home(const can_frame_t *frame) {
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         lv_obj_t * home_btn = lv_obj_find_by_name(parent, "valve_home_btn");
         lv_obj_add_state(home_btn, LV_STATE_USER_1);
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%ld", msg->value);
+        lv_subject_copy_string(&home_value_text, buf);
         esp_lv_adapter_unlock();
     }
 }
@@ -102,6 +106,8 @@ void valve_home_cb(lv_event_t * e) {
     HomeMsg msg;
     msg.homed = true;
     CAN_SEND_STRUCT(&can_mgr, HomeMsg, msg);
+    lv_obj_t * home_btn = lv_obj_find_by_name(parent, "valve_home_btn");
+    lv_obj_remove_flag(home_btn, LV_STATE_USER_1);
 }
 
 void mon_callback_1(lv_event_t * e) {
