@@ -37,14 +37,23 @@ lv_obj_t* parent = NULL;
 /* ------------------------------------------------------------------------
  * Pressure -> blowout valve PID control
  *
- * Valve convention: pose = 0 is FULLY OPEN (free venting -> low pressure),
- * pose = 100 is fully closed (pressure builds up). In theory that makes
- * this direct-acting, but on the real rig the correction came out
- * backwards, so this loop is reverse-acting in practice: the P and I
- * terms are negated right after epid_pi_calc() computes them, each
- * cycle, before the anti-windup clamp and the sum. (If the wiring or
- * valve direction changes again, delete the two negation lines below
- * to go back to direct-acting.)
+ * Valve convention, per your description: this is a blowout valve, and
+ * when pressure is TOO HIGH you close it (i.e. INCREASE pose) to bring
+ * pressure back down. So: error = pressure - target_pressure (positive
+ * when pressure is too high) -> output should INCREASE with a positive
+ * error. The epid library's built-in convention is the opposite
+ * (positive (setpoint - measure) -> positive output), so p_term/i_term
+ * are negated right after epid_pi_calc() computes them, each cycle,
+ * before the anti-windup clamp and the sum. If the physical direction
+ * ever flips again, delete the two negation lines below to go back to
+ * the library's default direct-acting behavior.
+ *
+ * PRESSURE_DEADBAND: once |error| is inside this band we hold the
+ * output instead of still nudging it - without this, sensor noise
+ * alone keeps producing tiny nonzero p_term/i_term values forever, and
+ * because this is an *incremental* controller (y_out is a running sum),
+ * that shows up exactly as "it never stops closing/opening even once
+ * we're basically at setpoint."
  *
  * The valve itself takes ~70 s for a full 0-100 stroke (i.e. ~0.7 %/s),
  * so the control loop is intentionally run slowly (every
@@ -74,6 +83,8 @@ lv_obj_t* parent = NULL;
 #define PRESSURE_PID_TD                0.0f     /* derivative disabled: pressure feedback is noisy
                                                   * and the valve is far too slow for a D-term to help */
 #define PRESSURE_PID_I_LIMIT           50.0f     /* anti-windup clamp on the I-term */
+#define PRESSURE_DEADBAND              1.0f      /* [kPa, or whatever unit `pressure` is in] -
+                                                   * hold output when |error| is inside this band */
 
 static epid_t pressure_pid;
 static bool   pressure_pid_ready = false;
@@ -106,6 +117,8 @@ static void pressure_pid_update(void)
          * jump - resume from where it physically is right now. */
         pressure_pid.y_out = current_pose;
         pressure_pid.xk_1  = pressure;
+        ESP_LOGI(TAG, "pid: auto enabled, bumpless transfer y_out=%.2f xk_1=%.2f",
+                 pressure_pid.y_out, pressure_pid.xk_1);
     }
     auto_enabled_prev = auto_enabled;
 
@@ -113,10 +126,24 @@ static void pressure_pid_update(void)
         return; /* manual mode: the UI slider drives set_valve_pose() instead */
     }
 
+    /* Positive `error` = pressure too high = this is the case where you
+     * said we need to close the valve further (increase pose). */
+    float error = pressure - target_pressure;
+
+    if (fabsf(error) < PRESSURE_DEADBAND) {
+        ESP_LOGI(TAG, "pid: error=%.2f within deadband (%.2f) - holding y_out=%.2f",
+                 error, PRESSURE_DEADBAND, pressure_pid.y_out);
+        /* Still update xk_1 so the next real correction starts from a
+         * fresh baseline, but don't touch y_out. */
+        pressure_pid.xk_1 = pressure;
+        return;
+    }
+
     /* e[k] = target_pressure - pressure, computed internally by the library. */
     epid_pi_calc(&pressure_pid, target_pressure, pressure);
 
-    /* Reverse-acting: see comment above the loop for why. */
+    /* Flip to match the physical direction described above: positive
+     * error (pressure too high) must increase the output (close further). */
     pressure_pid.p_term = -pressure_pid.p_term;
     pressure_pid.i_term = -pressure_pid.i_term;
 
@@ -125,6 +152,11 @@ static void pressure_pid_update(void)
 
     /* y[k] = y[k-1] + P[k] + I[k], clamped to the valve's physical range. */
     epid_pi_sum(&pressure_pid, VALVE_POS_MIN, VALVE_POS_MAX);
+
+    ESP_LOGI(TAG,
+             "pid: pressure=%.2f target=%.2f error=%.2f p=%.2f i=%.2f y_out=%.2f current_pose=%.2f",
+             pressure, target_pressure, error,
+             pressure_pid.p_term, pressure_pid.i_term, pressure_pid.y_out, current_pose);
 
     set_valve_pose(pressure_pid.y_out);
 }
