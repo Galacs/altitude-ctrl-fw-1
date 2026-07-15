@@ -33,6 +33,13 @@ void set_valve_pose(float pose);
 
 lv_obj_t* parent = NULL;
 
+#define MONITOR_CHART_POINT_COUNT 21
+#define MONITOR_CHART_SAMPLE_PERIOD_S   30.0f
+#define MONITOR_CHART_SAMPLE_PERIOD_MS  ((uint32_t)(MONITOR_CHART_SAMPLE_PERIOD_S * 1000.0f))
+
+static lv_obj_t          * monitor_chart_obj    = NULL;
+static lv_chart_series_t * monitor_chart_series = NULL;
+
 
 /* ------------------------------------------------------------------------
  * Pressure -> blowout valve PID control
@@ -481,6 +488,29 @@ void profiles_ui_init(void)
     lv_obj_add_event_cb(explorer, profile_explorer_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 }
 
+static void monitor_chart_init(void)
+{
+    monitor_chart_obj = lv_obj_find_by_name(parent, "monitor_chart");
+    if (monitor_chart_obj == NULL) return;
+
+    lv_chart_set_axis_range(monitor_chart_obj, LV_CHART_AXIS_PRIMARY_Y, 10, 110);
+    lv_chart_set_point_count(monitor_chart_obj, MONITOR_CHART_POINT_COUNT);
+    lv_chart_set_update_mode(monitor_chart_obj, LV_CHART_UPDATE_MODE_SHIFT);
+
+    monitor_chart_series = lv_chart_add_series(monitor_chart_obj, lv_color_hex(0x60a5fa),
+                                                LV_CHART_AXIS_PRIMARY_Y);
+}
+
+static void monitor_chart_update(void)
+{
+    if (monitor_chart_series == NULL) return;
+
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        lv_chart_set_next_value(monitor_chart_obj, monitor_chart_series, (int32_t)pressure);
+        esp_lv_adapter_unlock();
+    }
+}
+
 void app_main(void) {
     ESP_LOGW(TAG, "%d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     ESP_LOGW(TAG, "%d", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
@@ -520,6 +550,7 @@ void app_main(void) {
         parent = main_create();
         lv_screen_load(parent);
         profiles_ui_init();
+        monitor_chart_init();
         esp_lv_adapter_unlock();
     }
 
@@ -546,6 +577,7 @@ void app_main(void) {
     pressure_pid_init();
 
     uint32_t pid_tick_ms = 0;
+    uint32_t chart_tick_ms = 0;
     while (1) {
         can_manager_update(&can_mgr);   // dispatches all received frames
 
@@ -553,6 +585,12 @@ void app_main(void) {
         if (pid_tick_ms >= PRESSURE_PID_SAMPLE_PERIOD_MS) {
             pid_tick_ms = 0;
             pressure_pid_update();
+        }
+
+        chart_tick_ms += 10;
+        if (chart_tick_ms >= MONITOR_CHART_SAMPLE_PERIOD_MS) {
+            chart_tick_ms = 0;
+            monitor_chart_update();
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));
