@@ -24,6 +24,9 @@ static const char *TAG = "main";
 can_manager_t can_mgr;
 
 float pressure = 100.0;
+float current_pose = 0.0;
+float target_pressure = 0.0;
+void set_valve_pose(float pose);
 
 lv_obj_t* parent = NULL;
 
@@ -99,6 +102,7 @@ void on_valve_home(const can_frame_t *frame) {
 
 void on_valve_pose(const can_frame_t *frame) {
     const ValvePoseMsg *msg = (const ValvePoseMsg*) frame->data;
+    current_pose = msg->valve_pose;
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         lv_subject_set_int(&valve_pose, msg->valve_pose);
         esp_lv_adapter_unlock();
