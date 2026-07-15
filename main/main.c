@@ -38,10 +38,13 @@ lv_obj_t* parent = NULL;
  * Pressure -> blowout valve PID control
  *
  * Valve convention: pose = 0 is FULLY OPEN (free venting -> low pressure),
- * pose = 100 is fully closed (pressure builds up). So raising the
- * commanded pose INCREASES pressure - this is a direct-acting loop
- * (positive error -> positive output), which is exactly what the epid
- * library does by default, so no sign flip is needed here.
+ * pose = 100 is fully closed (pressure builds up). In theory that makes
+ * this direct-acting, but on the real rig the correction came out
+ * backwards, so this loop is reverse-acting in practice: the P and I
+ * terms are negated right after epid_pi_calc() computes them, each
+ * cycle, before the anti-windup clamp and the sum. (If the wiring or
+ * valve direction changes again, delete the two negation lines below
+ * to go back to direct-acting.)
  *
  * The valve itself takes ~70 s for a full 0-100 stroke (i.e. ~0.7 %/s),
  * so the control loop is intentionally run slowly (every
@@ -110,12 +113,14 @@ static void pressure_pid_update(void)
         return; /* manual mode: the UI slider drives set_valve_pose() instead */
     }
 
-    /* e[k] = target_pressure - pressure, computed internally by the library.
-     * Direct-acting: pressure too low (target > pressure) -> positive error
-     * -> higher output -> valve closes further -> pressure rises. */
+    /* e[k] = target_pressure - pressure, computed internally by the library. */
     epid_pi_calc(&pressure_pid, target_pressure, pressure);
 
-    /* Anti-windup: clamp the I-term. */
+    /* Reverse-acting: see comment above the loop for why. */
+    pressure_pid.p_term = -pressure_pid.p_term;
+    pressure_pid.i_term = -pressure_pid.i_term;
+
+    /* Anti-windup: clamp the (already direction-corrected) I-term. */
     epid_util_ilim(&pressure_pid, -PRESSURE_PID_I_LIMIT, PRESSURE_PID_I_LIMIT);
 
     /* y[k] = y[k-1] + P[k] + I[k], clamped to the valve's physical range. */
