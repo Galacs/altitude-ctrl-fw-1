@@ -23,6 +23,8 @@ static const char *TAG = "main";
 
 can_manager_t can_mgr;
 
+float pressure = 100.0;
+
 lv_obj_t* parent = NULL;
 
 CAN_STRUCT(HeartbeatMsg, 0x200,
@@ -60,6 +62,7 @@ void on_heartbeat(const can_frame_t *frame) {
 void on_sensors_a(const can_frame_t *frame) {
     const SensorsAMsg *msg = (const SensorsAMsg *)frame->data;
     // ESP_LOGW(TAG, "température: %f", msg->temperature);
+    pressure = msg->pressure;
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         lv_subject_set_int(&pump_pressure, (int) msg->pressure);
         lv_subject_set_int(&temperature, (int) msg->temperature);
@@ -143,14 +146,18 @@ void valve_en_cb(lv_event_t * e) {
     CAN_SEND_STRUCT(&can_mgr, StepperEnMSG, msg);
 }
 
+void set_valve_pose(float pose) {
+    ValvePoseMsg msg;
+    msg.valve_pose = pose;
+    CAN_SEND_STRUCT(&can_mgr, ValvePoseMsg, msg);
+}
+
 void slider_update_callback(lv_event_t * e) {
     lv_obj_t * slider = lv_event_get_target(e);
     int32_t value = lv_slider_get_value(slider);
     // lv_subject_set_int(&valve_pose, value);
     ESP_LOGW(TAG, "valeur updated: %ld", (long)value);
-    ValvePoseMsg msg;
-    msg.valve_pose = value;
-    CAN_SEND_STRUCT(&can_mgr, ValvePoseMsg, msg);
+    set_valve_pose(value);
 }
 
 void toggle_btn_callback(lv_event_t * e) {
