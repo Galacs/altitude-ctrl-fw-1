@@ -249,7 +249,7 @@ lv_obj_t * main_create(void)
         lv_obj_set_style_pad_all(monitor_chart, 0, 0);
         lv_obj_set_style_radius(monitor_chart, 0, 0);
 
-        lv_obj_t * monitor_y_axis = position_scale_create(lv_tabview_tab_0, &temperature, 130, 310, 10, 110);
+        lv_obj_t * monitor_y_axis = position_scale_create(lv_tabview_tab_0, &zero_int_subject, 130, 310, 10, 110);
         lv_obj_set_name(monitor_y_axis, "monitor_y_axis");
         lv_obj_set_x(monitor_y_axis, 215);
         lv_obj_set_y(monitor_y_axis, 15);
@@ -262,7 +262,7 @@ lv_obj_t * main_create(void)
         lv_scale_set_text_src(monitor_y_axis, monitor_y_axis_text_src_0);
         lv_obj_set_style_pad_all(monitor_y_axis, 0, 0);
 
-        lv_obj_t * monitor_x_axis = position_scale_create(lv_tabview_tab_0, &temperature, 630, 60, 10, 110);
+        lv_obj_t * monitor_x_axis = position_scale_create(lv_tabview_tab_0, &zero_int_subject, 630, 60, 10, 110);
         lv_obj_set_name(monitor_x_axis, "monitor_x_axis");
         lv_obj_set_x(monitor_x_axis, 345);
         lv_obj_set_y(monitor_x_axis, 325);
@@ -357,7 +357,7 @@ lv_obj_t * main_create(void)
         lv_obj_set_style_pad_all(profile_preview_chart, 0, 0);
         lv_obj_set_style_radius(profile_preview_chart, 0, 0);
 
-        lv_obj_t * preview_y_axis = position_scale_create(lv_tabview_tab_1, &temperature, 130, 470, 10, 110);
+        lv_obj_t * preview_y_axis = position_scale_create(lv_tabview_tab_1, &zero_int_subject, 130, 470, 10, 110);
         lv_obj_set_name(preview_y_axis, "preview_y_axis");
         lv_obj_set_x(preview_y_axis, 270);
         lv_obj_set_y(preview_y_axis, 20);
@@ -370,7 +370,7 @@ lv_obj_t * main_create(void)
         lv_scale_set_major_tick_every(preview_y_axis, 5);
         lv_obj_set_style_pad_all(preview_y_axis, 0, 0);
 
-        lv_obj_t * preview_x_axis = position_scale_create(lv_tabview_tab_1, &temperature, 580, 60, 10, 110);
+        lv_obj_t * preview_x_axis = position_scale_create(lv_tabview_tab_1, &zero_int_subject, 580, 60, 10, 110);
         lv_obj_set_name(preview_x_axis, "preview_x_axis");
         lv_obj_set_x(preview_x_axis, 400);
         lv_obj_set_y(preview_x_axis, 490);
