@@ -50,6 +50,14 @@
 				<button name="valve_home_btn" y="205" x="30" height="80" width="80" text="&#xF015;">
 					<event_cb trigger="pressed" callback="valve_home_cb" />
 				</button>
+				<lv_label
+					name="sg_status"
+					style_text_color="0xfcee01"
+					x="60"
+					y="295"
+					width="220"
+					bind_text="sg_status_text"
+				/>
 				<toggle_button name="valve_en_btn" height="80" width="80" y="335" x="30" text="&#xF0E7;">
 					<event_cb trigger="pressed" callback="valve_en_cb" />
 				</toggle_button>

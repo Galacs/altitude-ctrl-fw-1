@@ -94,6 +94,7 @@ extern lv_subject_t valve_target;
 extern lv_subject_t temperature;
 extern lv_subject_t zero_int_subject;
 extern lv_subject_t home_value_text;
+extern lv_subject_t sg_status_text;
 extern lv_subject_t pump_target_text;
 extern lv_subject_t pump_pressure;
 extern lv_subject_t pump_pressure_text;

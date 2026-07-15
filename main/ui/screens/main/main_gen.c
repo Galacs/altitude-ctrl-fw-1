@@ -149,6 +149,14 @@ lv_obj_t * main_create(void)
         lv_obj_set_x(valve_home_btn, 30);
         lv_obj_add_event_cb(valve_home_btn, valve_home_cb, LV_EVENT_PRESSED, NULL);
 
+        lv_obj_t * sg_status = lv_label_create(lv_tabview_tab_0);
+        lv_obj_set_name(sg_status, "sg_status");
+        lv_obj_set_style_text_color(sg_status, lv_color_hex(0xfcee01), 0);
+        lv_obj_set_x(sg_status, 60);
+        lv_obj_set_y(sg_status, 295);
+        lv_obj_set_width(sg_status, 220);
+        lv_label_bind_text(sg_status, &sg_status_text, NULL);
+
         lv_obj_t * valve_en_btn = toggle_button_create(lv_tabview_tab_0, "", 80, 80);
         lv_obj_set_name(valve_en_btn, "valve_en_btn");
         lv_obj_set_y(valve_en_btn, 335);

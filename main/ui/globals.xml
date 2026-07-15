@@ -18,6 +18,7 @@
 		<int name="temperature" value="35" />
 		<int name="zero_int_subject" value="0" />
 		<string name="home_value_text" value="xx" />
+		<string name="sg_status_text" value="xx" />
 		<string name="pump_target_text" value="pression" />
 		<int name="pump_pressure" value="50" />
 		<string name="pump_pressure_text" value="pression" />

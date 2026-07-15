@@ -48,6 +48,9 @@ CAN_STRUCT(HomeMsg, 0x205,
     bool homed;
     uint32_t value;
 );
+CAN_STRUCT(VaccumMsg, 0x206,
+    bool en_a;
+);
 
 void on_heartbeat(const can_frame_t *frame) {
     const HeartbeatMsg *msg = (const HeartbeatMsg *)frame->data;
@@ -71,6 +74,12 @@ void on_sensors_a(const can_frame_t *frame) {
 void on_stepper_status(const can_frame_t *frame) {
     const StepperStatusMsg *msg = (const StepperStatusMsg*) frame->data;
     ESP_LOGW(TAG, "stallguard status: %d", msg->sg_res);
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%d", msg->sg_res);
+        lv_subject_copy_string(&sg_status_text, buf);
+        esp_lv_adapter_unlock();
+    }
 }
 
 void on_valve_home(const can_frame_t *frame) {
@@ -81,6 +90,14 @@ void on_valve_home(const can_frame_t *frame) {
         char buf[32];
         snprintf(buf, sizeof(buf), "%ld", msg->value);
         lv_subject_copy_string(&home_value_text, buf);
+        esp_lv_adapter_unlock();
+    }
+}
+
+void on_valve_pose(const can_frame_t *frame) {
+    const ValvePoseMsg *msg = (const ValvePoseMsg*) frame->data;
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        lv_subject_set_int(&valve_pose, msg->valve_pose);
         esp_lv_adapter_unlock();
     }
 }
@@ -129,7 +146,7 @@ void valve_en_cb(lv_event_t * e) {
 void slider_update_callback(lv_event_t * e) {
     lv_obj_t * slider = lv_event_get_target(e);
     int32_t value = lv_slider_get_value(slider);
-    lv_subject_set_int(&valve_pose, value);
+    // lv_subject_set_int(&valve_pose, value);
     ESP_LOGW(TAG, "valeur updated: %ld", (long)value);
     ValvePoseMsg msg;
     msg.valve_pose = value;
@@ -142,7 +159,12 @@ void toggle_btn_callback(lv_event_t * e) {
     // lv_obj_set_flag(slider, LV_OBJ_FLAG_CLICKABLE, true);
 }
 
-void pump_enable_callback(lv_event_t * e) {}
+void pump_enable_callback(lv_event_t * e) {
+    lv_obj_t * btn = lv_event_get_target(e);
+    VaccumMsg msg;
+    msg.en_a = !lv_obj_has_state(btn, LV_STATE_CHECKED);
+    CAN_SEND_STRUCT(&can_mgr, VaccumMsg, msg);
+}
 
 void run_start_cb(lv_event_t * e) {}
 void run_pause_resume_cb(lv_event_t * e) {}
