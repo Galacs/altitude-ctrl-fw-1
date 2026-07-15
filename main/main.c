@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
+#include "pid.h"
+
 
 // #define LV_LVGL_H_INCLUDE_SIMPLE
 // #undef LV_USE_XML
@@ -30,6 +32,97 @@ bool auto_enabled = false;
 void set_valve_pose(float pose);
 
 lv_obj_t* parent = NULL;
+
+
+/* ------------------------------------------------------------------------
+ * Pressure -> blowout valve PID control
+ *
+ * Valve convention: pose = 0 is FULLY OPEN (free venting -> low pressure),
+ * pose = 100 is fully closed (pressure builds up). So raising the
+ * commanded pose INCREASES pressure - this is a direct-acting loop
+ * (positive error -> positive output), which is exactly what the epid
+ * library does by default, so no sign flip is needed here.
+ *
+ * The valve itself takes ~70 s for a full 0-100 stroke (i.e. ~0.7 %/s),
+ * so the control loop is intentionally run slowly (every
+ * PRESSURE_PID_SAMPLE_PERIOD_S) instead of on every 10 ms tick - running
+ * much faster than the plant can physically respond just lets the
+ * integral term wind up.
+ *
+ * `auto_enabled` (toggled by valve_auto_cb(), the "auto" button in the UI)
+ * gates whether this loop is allowed to drive the valve at all. While
+ * auto is off, the slider (slider_update_callback()) is what's driving
+ * set_valve_pose() instead. On the false->true transition we do a
+ * "bumpless transfer": the PID's internal y_out is snapped to the
+ * valve's actual current_pose (rather than resuming from whatever y_out
+ * was left at, e.g. its very first init value) so enabling auto doesn't
+ * cause a sudden jump in commanded position. ------------------------------------------------ */
+
+#define PRESSURE_PID_SAMPLE_PERIOD_S   5.0f     /* control loop period [s] */
+#define PRESSURE_PID_SAMPLE_PERIOD_MS  ((uint32_t)(PRESSURE_PID_SAMPLE_PERIOD_S * 1000.0f))
+
+#define VALVE_POS_MIN                  5.0f
+#define VALVE_POS_MAX                  90.0f
+
+/* --- Starting-point tuning only: these WILL need to be tuned on the
+ * actual rig (e.g. step the target_pressure and watch the response). --- */
+#define PRESSURE_PID_KP                2.0f     /* % valve opening per unit of pressure error */
+#define PRESSURE_PID_TI                40.0f    /* integral time constant [s] */
+#define PRESSURE_PID_TD                0.0f     /* derivative disabled: pressure feedback is noisy
+                                                  * and the valve is far too slow for a D-term to help */
+#define PRESSURE_PID_I_LIMIT           50.0f     /* anti-windup clamp on the I-term */
+
+static epid_t pressure_pid;
+static bool   pressure_pid_ready = false;
+static bool   auto_enabled_prev  = false;
+
+/* Call once, after `pressure` and `current_pose` hold a valid first reading. */
+static void pressure_pid_init(void)
+{
+    epid_info_t info = epid_init_T(&pressure_pid,
+                                    pressure, pressure, current_pose,
+                                    PRESSURE_PID_KP, PRESSURE_PID_TI, PRESSURE_PID_TD,
+                                    PRESSURE_PID_SAMPLE_PERIOD_S);
+    if (info != EPID_ERR_NONE) {
+        ESP_LOGE(TAG, "pressure PID init failed (code %u)", info);
+        pressure_pid_ready = false;
+        return;
+    }
+    pressure_pid_ready = true;
+}
+
+/* Call this every PRESSURE_PID_SAMPLE_PERIOD_S seconds (see the app_main loop). */
+static void pressure_pid_update(void)
+{
+    if (!pressure_pid_ready) {
+        return;
+    }
+
+    if (auto_enabled && !auto_enabled_prev) {
+        /* Just switched into auto: bumpless transfer so the valve doesn't
+         * jump - resume from where it physically is right now. */
+        pressure_pid.y_out = current_pose;
+        pressure_pid.xk_1  = pressure;
+    }
+    auto_enabled_prev = auto_enabled;
+
+    if (!auto_enabled) {
+        return; /* manual mode: the UI slider drives set_valve_pose() instead */
+    }
+
+    /* e[k] = target_pressure - pressure, computed internally by the library.
+     * Direct-acting: pressure too low (target > pressure) -> positive error
+     * -> higher output -> valve closes further -> pressure rises. */
+    epid_pi_calc(&pressure_pid, target_pressure, pressure);
+
+    /* Anti-windup: clamp the I-term. */
+    epid_util_ilim(&pressure_pid, -PRESSURE_PID_I_LIMIT, PRESSURE_PID_I_LIMIT);
+
+    /* y[k] = y[k-1] + P[k] + I[k], clamped to the valve's physical range. */
+    epid_pi_sum(&pressure_pid, VALVE_POS_MIN, VALVE_POS_MAX);
+
+    set_valve_pose(pressure_pid.y_out);
+}
 
 CAN_STRUCT(HeartbeatMsg, 0x200,
     uint8_t  counter;
@@ -413,8 +506,18 @@ void app_main(void) {
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
 
+    pressure_pid_init();
+
+    uint32_t pid_tick_ms = 0;
     while (1) {
         can_manager_update(&can_mgr);   // dispatches all received frames
+
+        pid_tick_ms += 10;
+        if (pid_tick_ms >= PRESSURE_PID_SAMPLE_PERIOD_MS) {
+            pid_tick_ms = 0;
+            pressure_pid_update();
+        }
+
         vTaskDelay(pdMS_TO_TICKS(10));
     }
     printf("Hello world!\n");
