@@ -71,6 +71,14 @@ void on_stepper_status(const can_frame_t *frame) {
     ESP_LOGW(TAG, "stallguard status: %d", msg->sg_res);
 }
 
+void on_valve_home(const can_frame_t *frame) {
+    const HomeMsg *msg = (const HomeMsg*) frame->data;
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        lv_obj_t * home_btn = lv_obj_find_by_name(parent, "valve_home_btn");
+        lv_obj_add_state(home_btn, LV_STATE_USER_1);
+        esp_lv_adapter_unlock();
+    }
+}
 
 static void add_data(lv_timer_t * t)
 {
@@ -90,18 +98,18 @@ static void add_data(lv_timer_t * t)
     lv_chart_refresh(chart);
 }
 
+void valve_home_cb(lv_event_t * e) {
+    HomeMsg msg;
+    msg.homed = true;
+    CAN_SEND_STRUCT(&can_mgr, HomeMsg, msg);
+}
+
 void mon_callback_1(lv_event_t * e) {
     ESP_LOGW(TAG, "ca call");
     // lv_subject_copy_string(&txt_btn_stepper_en, "active");
 
-    lv_obj_t * home_btn = lv_obj_find_by_name(parent, "valve_home_btn");
-    lv_obj_add_state(home_btn, LV_STATE_USER_1);
     lv_obj_t * valve_auto_btn = lv_obj_find_by_name(parent, "valve_auto_btn");
     lv_obj_set_state(valve_auto_btn, LV_STATE_CHECKED, false);
-
-    HomeMsg msg;
-    msg.homed = true;
-    CAN_SEND_STRUCT(&can_mgr, HomeMsg, msg);
 }
 
 void valve_en_cb(lv_event_t * e) {
@@ -362,6 +370,7 @@ void app_main(void) {
     can_manager_register_callback(&can_mgr, HeartbeatMsg_CAN_ID, on_heartbeat);
     can_manager_register_callback(&can_mgr, SensorsAMsg_CAN_ID, on_sensors_a);
     can_manager_register_callback(&can_mgr, StepperStatusMsg_CAN_ID, on_stepper_status);
+    can_manager_register_callback(&can_mgr, HomeMsg_CAN_ID, on_valve_home);
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
 
