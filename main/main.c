@@ -27,7 +27,7 @@ can_manager_t can_mgr;
 
 float pressure = 100.0;
 float current_pose = 0.0;
-float target_pressure = 0.0;
+float target_pressure = 90.0;
 bool auto_enabled = false;
 void set_valve_pose(float pose);
 
