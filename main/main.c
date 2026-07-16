@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <inttypes.h>
 
 #include <driver/i2c_master.h>
 #include <esp_log.h>
@@ -206,9 +207,6 @@ void pump_enable_callback(lv_event_t * e) {
     CAN_SEND_STRUCT(&can_mgr, VaccumMsg, msg);
 }
 
-void run_start_cb(lv_event_t * e) {}
-void run_pause_resume_cb(lv_event_t * e) {}
-void run_stop_cb(lv_event_t * e) {}
 void export_delete_selected_cb(lv_event_t * e) {}
 
 void from_comp_callback(lv_event_t * e) {
@@ -291,6 +289,177 @@ static bool profile_load(const char * real_path)
     return profile_point_count > 0;
 }
  
+/* --- Profile run state machine ---
+ * Drives target_pressure (and its on-screen label) by walking through the
+ * currently loaded profile (profile_time[]/profile_pressure[]) over real
+ * time, once Start is pressed. Advanced from app_main's 10ms loop via
+ * profile_run_update(), same pattern as pressure_pid_update(). */
+typedef enum {
+    PROFILE_RUN_STOPPED,
+    PROFILE_RUN_RUNNING,
+    PROFILE_RUN_PAUSED,
+} profile_run_state_t;
+
+static profile_run_state_t profile_run_state = PROFILE_RUN_STOPPED;
+static float                profile_elapsed_s = 0.0f; /* seconds into the current run; preserved across pause */
+
+#define PROFILE_RUN_SAMPLE_PERIOD_S   0.25f
+#define PROFILE_RUN_SAMPLE_PERIOD_MS  ((uint32_t)(PROFILE_RUN_SAMPLE_PERIOD_S * 1000.0f))
+
+/* Linear interpolation of the loaded profile at t_s seconds into the run.
+ * Clamps to the first point before t=0, and HOLDS the last point's value
+ * once t_s runs past the profile's last timestamp (cycle keeps "running",
+ * just flat) rather than stopping or looping. */
+static float profile_interpolate(float t_s)
+{
+    if (profile_point_count == 0) {
+        return target_pressure; /* nothing loaded - leave the setpoint alone */
+    }
+    if (profile_point_count == 1 || t_s <= (float)profile_time[0]) {
+        return (float)profile_pressure[0];
+    }
+    if (t_s >= (float)profile_time[profile_point_count - 1]) {
+        return (float)profile_pressure[profile_point_count - 1];
+    }
+
+    for (size_t i = 1; i < profile_point_count; i++) {
+        if (t_s <= (float)profile_time[i]) {
+            float t0   = (float)profile_time[i - 1];
+            float t1   = (float)profile_time[i];
+            float p0   = (float)profile_pressure[i - 1];
+            float p1   = (float)profile_pressure[i];
+            float span = t1 - t0;
+            float frac = (span > 0.0f) ? (t_s - t0) / span : 0.0f;
+            return p0 + frac * (p1 - p0);
+        }
+    }
+    return (float)profile_pressure[profile_point_count - 1]; /* unreachable in practice */
+}
+
+/* Pushes a new setpoint out to the PID (target_pressure) and to the
+ * on-screen target label. Does NOT touch pump_pressure - that subject
+ * reflects the live sensor reading, not the setpoint. */
+static void profile_apply_target(float value)
+{
+    target_pressure = value;
+
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%.1f kPa", value);
+
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        lv_subject_copy_string(&pump_target_text, buf);
+        esp_lv_adapter_unlock();
+    }
+}
+
+static const char * profile_run_state_label(profile_run_state_t state)
+{
+    switch (state) {
+        case PROFILE_RUN_RUNNING: return "En cours";
+        case PROFILE_RUN_PAUSED:  return "Pause";
+        case PROFILE_RUN_STOPPED:
+        default:                  return "Pret";
+    }
+}
+
+static void profile_run_format_clock(char * buf, size_t buf_len, float elapsed_s)
+{
+    uint32_t total_s   = (profile_point_count > 0) ? (uint32_t)profile_time[profile_point_count - 1] : 0;
+    uint32_t elapsed_u = (elapsed_s > 0.0f) ? (uint32_t)elapsed_s : 0;
+    if (elapsed_u > total_s) elapsed_u = total_s;
+
+    uint32_t total_min   = total_s / 60;
+    uint32_t total_sec   = total_s % 60;
+    uint32_t elapsed_min = elapsed_u / 60;
+    uint32_t elapsed_sec = elapsed_u % 60;
+
+    if (total_min   > 99) total_min   = 99;
+    if (elapsed_min > 99) elapsed_min = 99;
+
+    snprintf(buf, buf_len, "%02" PRIu32 ":%02" PRIu32 " / %02" PRIu32 ":%02" PRIu32,
+             elapsed_min, elapsed_sec, total_min, total_sec);
+}
+
+static void profile_run_update_ui_labels(void)
+{
+    char clock_buf[24];
+    profile_run_format_clock(clock_buf, sizeof(clock_buf), profile_elapsed_s);
+
+    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+        lv_subject_copy_string(&run_state_text, profile_run_state_label(profile_run_state));
+        lv_subject_copy_string(&run_time_text, clock_buf);
+        esp_lv_adapter_unlock();
+    }
+}
+
+/* Called every PROFILE_RUN_SAMPLE_PERIOD_MS from app_main's loop. No-op
+ * unless a run is actively RUNNING (paused/stopped just holds still). */
+static void profile_run_update(void)
+{
+    if (profile_run_state != PROFILE_RUN_RUNNING) return;
+    if (profile_point_count == 0) return;
+
+    profile_elapsed_s += PROFILE_RUN_SAMPLE_PERIOD_S;
+    profile_apply_target(profile_interpolate(profile_elapsed_s));
+    profile_run_update_ui_labels();
+}
+
+/* Wired up in main.xml as the "Start" button's event_cb.
+ * Fresh start (coming from STOPPED) begins at t=0; pressing Start again
+ * after a Pause resumes from profile_elapsed_s where it left off. */
+void run_start_cb(lv_event_t * e)
+{
+    (void)e;
+
+    if (profile_point_count == 0) {
+        ESP_LOGW(TAG, "run_start: no profile loaded, ignoring");
+        return;
+    }
+    if (profile_run_state == PROFILE_RUN_RUNNING) return; /* already going */
+
+    if (profile_run_state == PROFILE_RUN_STOPPED) {
+        profile_elapsed_s = 0.0f;
+    }
+    profile_run_state = PROFILE_RUN_RUNNING;
+    profile_apply_target(profile_interpolate(profile_elapsed_s));
+    profile_run_update_ui_labels();
+    ESP_LOGI(TAG, "profile run: start at t=%.2fs", profile_elapsed_s);
+}
+
+/* Wired up in main.xml as the "Pause/Resume" button's event_cb. Toggles
+ * between RUNNING and PAUSED; if nothing is running yet it just behaves
+ * like Start. */
+void run_pause_resume_cb(lv_event_t * e)
+{
+    switch (profile_run_state) {
+        case PROFILE_RUN_RUNNING:
+            profile_run_state = PROFILE_RUN_PAUSED;
+            profile_run_update_ui_labels();
+            ESP_LOGI(TAG, "profile run: paused at t=%.2fs", profile_elapsed_s);
+            break;
+        case PROFILE_RUN_PAUSED:
+            profile_run_state = PROFILE_RUN_RUNNING;
+            profile_run_update_ui_labels();
+            ESP_LOGI(TAG, "profile run: resumed at t=%.2fs", profile_elapsed_s);
+            break;
+        case PROFILE_RUN_STOPPED:
+        default:
+            run_start_cb(e);
+            break;
+    }
+}
+
+/* Wired up in main.xml as the "Stop" button's event_cb. Resets progress
+ * to t=0, so the next Start begins the profile from the beginning. */
+void run_stop_cb(lv_event_t * e)
+{
+    (void)e;
+    profile_run_state = PROFILE_RUN_STOPPED;
+    profile_elapsed_s = 0.0f;
+    profile_run_update_ui_labels();
+    ESP_LOGI(TAG, "profile run: stopped, progress reset");
+}
+
 /* Wired up as the file explorer's event handler, added in profiles_ui_init() */
 static void profile_explorer_event_cb(lv_event_t * e)
 {
@@ -312,6 +481,10 @@ static void profile_explorer_event_cb(lv_event_t * e)
     if(profile_load(real_path)) {
         ESP_LOGW(TAG, "et ca redraw ?");
         profile_chart_redraw();
+
+        profile_run_state = PROFILE_RUN_STOPPED;
+        profile_elapsed_s = 0.0f;
+        profile_run_update_ui_labels();
     }
 }
  
@@ -380,6 +553,8 @@ void profiles_ui_init(void)
     lv_obj_update_layout(explorer);
  
     lv_obj_add_event_cb(explorer, profile_explorer_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
+    profile_run_update_ui_labels();
 }
 
 static void monitor_chart_init(void)
@@ -472,6 +647,7 @@ void app_main(void) {
 
     uint32_t pid_tick_ms = 0;
     uint32_t chart_tick_ms = 0;
+    uint32_t profile_run_tick_ms = 0;
     while (1) {
         can_manager_update(&can_mgr);   // dispatches all received frames
 
@@ -485,6 +661,12 @@ void app_main(void) {
         if (chart_tick_ms >= MONITOR_CHART_SAMPLE_PERIOD_MS) {
             chart_tick_ms = 0;
             monitor_chart_update();
+        }
+
+        profile_run_tick_ms += 10;
+        if (profile_run_tick_ms >= PROFILE_RUN_SAMPLE_PERIOD_MS) {
+            profile_run_tick_ms = 0;
+            profile_run_update();
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));

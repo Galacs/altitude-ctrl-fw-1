@@ -23,6 +23,8 @@
 		<int name="pump_pressure" value="50" />
 		<string name="pump_pressure_text" value="100 kPa" />
 		<string name="vario_text" value="0 Pa/s" />
+		<string name="run_state_text" value="Pret" />
+		<string name="run_time_text" value="00:00 / 00:00" />
 
 		<!-- Add <int>, <string>, or <float> subjects here -->
 	</subjects>

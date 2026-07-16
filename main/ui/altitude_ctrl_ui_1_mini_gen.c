@@ -84,6 +84,8 @@ lv_subject_t pump_target_text;
 lv_subject_t pump_pressure;
 lv_subject_t pump_pressure_text;
 lv_subject_t vario_text;
+lv_subject_t run_state_text;
+lv_subject_t run_time_text;
 
 /**********************
  *      MACROS
@@ -171,6 +173,22 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
                            UI_SUBJECT_STRING_LENGTH,
                            "0 Pa/s"
                           );
+    static char run_state_text_buf[UI_SUBJECT_STRING_LENGTH];
+    static char run_state_text_prev_buf[UI_SUBJECT_STRING_LENGTH];
+    lv_subject_init_string(&run_state_text,
+                           run_state_text_buf,
+                           run_state_text_prev_buf,
+                           UI_SUBJECT_STRING_LENGTH,
+                           "Pret"
+                          );
+    static char run_time_text_buf[UI_SUBJECT_STRING_LENGTH];
+    static char run_time_text_prev_buf[UI_SUBJECT_STRING_LENGTH];
+    lv_subject_init_string(&run_time_text,
+                           run_time_text_buf,
+                           run_time_text_prev_buf,
+                           UI_SUBJECT_STRING_LENGTH,
+                           "00:00 / 00:00"
+                          );
 
     /*----------------
      * Translations
@@ -199,6 +217,8 @@ void altitude_ctrl_ui_1_mini_init_gen(const char * asset_path)
     lv_xml_register_subject(NULL, "pump_pressure", &pump_pressure);
     lv_xml_register_subject(NULL, "pump_pressure_text", &pump_pressure_text);
     lv_xml_register_subject(NULL, "vario_text", &vario_text);
+    lv_xml_register_subject(NULL, "run_state_text", &run_state_text);
+    lv_xml_register_subject(NULL, "run_time_text", &run_time_text);
 
     /* Register callbacks */
     lv_xml_register_event_cb(NULL, "valve_auto_cb", valve_auto_cb);

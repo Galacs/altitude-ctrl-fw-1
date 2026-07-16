@@ -238,10 +238,10 @@
 					<style name="style_card" />
 					<event_cb trigger="clicked" callback="run_stop_cb" />
 				</button>
-				<lv_label name="run_state_label" text="Pret" x="35" y="475">
+				<lv_label name="run_state_label" bind_text="run_state_text" x="35" y="475">
 					<style name="style_pump_value" />
 				</lv_label>
-				<lv_label name="run_elapsed_label" text="00:00 / 00:00" x="200" y="480">
+				<lv_label name="run_elapsed_label" bind_text="run_time_text" x="200" y="480">
 					<style name="style_card_title" />
 				</lv_label>
 

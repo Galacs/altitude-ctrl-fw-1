@@ -37,7 +37,7 @@ static void keypad_event_cb(lv_event_t * e)
             char buf[16];
             lv_snprintf(buf, sizeof(buf), "%d kPa", (int)value);
             lv_subject_copy_string(&pump_target_text, buf);
-            lv_subject_set_int(&pump_pressure, value);
+            // lv_subject_set_int(&pump_pressure, value);
             target_pressure = value;
         }
         /* empty field on Enter = leave pump_target_text untouched */

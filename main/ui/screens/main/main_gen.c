@@ -345,14 +345,14 @@ lv_obj_t * main_create(void)
 
         lv_obj_t * run_state_label = lv_label_create(lv_tabview_tab_1);
         lv_obj_set_name(run_state_label, "run_state_label");
-        lv_label_set_text(run_state_label, "Pret");
+        lv_label_bind_text(run_state_label, &run_state_text, NULL);
         lv_obj_set_x(run_state_label, 35);
         lv_obj_set_y(run_state_label, 475);
         lv_obj_add_style(run_state_label, &style_pump_value, 0);
 
         lv_obj_t * run_elapsed_label = lv_label_create(lv_tabview_tab_1);
         lv_obj_set_name(run_elapsed_label, "run_elapsed_label");
-        lv_label_set_text(run_elapsed_label, "00:00 / 00:00");
+        lv_label_bind_text(run_elapsed_label, &run_time_text, NULL);
         lv_obj_set_x(run_elapsed_label, 200);
         lv_obj_set_y(run_elapsed_label, 480);
         lv_obj_add_style(run_elapsed_label, &style_card_title, 0);
