@@ -32,8 +32,8 @@ void set_valve_pose(float pose);
 
 lv_obj_t* parent = NULL;
 
-#define MONITOR_CHART_POINT_COUNT 21
-#define MONITOR_CHART_SAMPLE_PERIOD_S   30.0f
+#define MONITOR_CHART_POINT_COUNT 51
+#define MONITOR_CHART_SAMPLE_PERIOD_S   60.0f
 #define MONITOR_CHART_SAMPLE_PERIOD_MS  ((uint32_t)(MONITOR_CHART_SAMPLE_PERIOD_S * 1000.0f))
 
 static lv_obj_t          * monitor_chart_obj    = NULL;
