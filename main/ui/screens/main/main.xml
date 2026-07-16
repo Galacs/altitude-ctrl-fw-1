@@ -96,6 +96,14 @@
 				<lv_label name="pump_pressure_value" x="495" y="409" width="220" bind_text="pump_pressure_text">
 					<style name="style_pump_value" />
 				</lv_label>
+				<lv_label
+					style_text_color="0xfcee01"
+					name="vario_value"
+					x="570"
+					y="409"
+					width="220"
+					bind_text="vario_text"
+				/>
 
 				<!-- Target pressure setpoint (tap to open numeric keypad) -->
 				<lv_label text="Cible: " x="645" y="395">

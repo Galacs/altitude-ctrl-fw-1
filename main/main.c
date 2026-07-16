@@ -2,6 +2,7 @@
 
 #include <driver/i2c_master.h>
 #include <esp_log.h>
+#include <esp_timer.h>
 #include "io_extension.h"
 #include "sd.h"
 #include "display.h"
@@ -29,6 +30,11 @@ float current_pose = 0.0;
 float target_pressure = 90.0;
 bool auto_enabled = false;
 void set_valve_pose(float pose);
+
+/* Variometer: rate of pressure change, derived from consecutive
+   SensorsAMsg samples (pressure is in kPa, vario is reported in Pa/s) */
+static float   vario_last_pressure_kpa = 100.0f;
+static int64_t vario_last_time_us      = 0;
 
 lv_obj_t* parent = NULL;
 
@@ -75,12 +81,29 @@ void on_sensors_a(const can_frame_t *frame) {
     const SensorsAMsg *msg = (const SensorsAMsg *)frame->data;
     // ESP_LOGW(TAG, "température: %f", msg->temperature);
     pressure = msg->pressure;
+
+    int64_t now_us = esp_timer_get_time();
+    float vario_pa_s = 0.0f;
+    if (vario_last_time_us != 0) {
+        float dt_s = (now_us - vario_last_time_us) / 1000000.0f;
+        if (dt_s > 0.0f) {
+            vario_pa_s = (pressure - vario_last_pressure_kpa) * 1000.0f / dt_s;
+        }
+    }
+    vario_last_pressure_kpa = pressure;
+    vario_last_time_us      = now_us;
+
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         lv_subject_set_int(&pump_pressure, (int) msg->pressure);
         lv_subject_set_int(&temperature, (int) msg->temperature);
         char buf[32];
         snprintf(buf, sizeof(buf), "%.1f kPa", msg->pressure);
         lv_subject_copy_string(&pump_pressure_text, buf);
+
+        char vario_buf[32];
+        snprintf(vario_buf, sizeof(vario_buf), "%.1f Pa/s", vario_pa_s);
+        lv_subject_copy_string(&vario_text, vario_buf);
+
         esp_lv_adapter_unlock();
     }
     // ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);

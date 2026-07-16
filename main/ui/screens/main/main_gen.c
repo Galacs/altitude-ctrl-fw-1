@@ -205,6 +205,14 @@ lv_obj_t * main_create(void)
         lv_label_bind_text(pump_pressure_value, &pump_pressure_text, NULL);
         lv_obj_add_style(pump_pressure_value, &style_pump_value, 0);
 
+        lv_obj_t * vario_value = lv_label_create(lv_tabview_tab_0);
+        lv_obj_set_style_text_color(vario_value, lv_color_hex(0xfcee01), 0);
+        lv_obj_set_name(vario_value, "vario_value");
+        lv_obj_set_x(vario_value, 570);
+        lv_obj_set_y(vario_value, 409);
+        lv_obj_set_width(vario_value, 220);
+        lv_label_bind_text(vario_value, &vario_text, NULL);
+
         lv_obj_t * lv_label_3 = lv_label_create(lv_tabview_tab_0);
         lv_label_set_text(lv_label_3, "Cible: ");
         lv_obj_set_x(lv_label_3, 645);

@@ -21,7 +21,8 @@
 		<string name="sg_status_text" value="xx" />
 		<string name="pump_target_text" value="pression" />
 		<int name="pump_pressure" value="50" />
-		<string name="pump_pressure_text" value="pression" />
+		<string name="pump_pressure_text" value="100 kPa" />
+		<string name="vario_text" value="0 Pa/s" />
 
 		<!-- Add <int>, <string>, or <float> subjects here -->
 	</subjects>

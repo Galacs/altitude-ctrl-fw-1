@@ -98,6 +98,7 @@ extern lv_subject_t sg_status_text;
 extern lv_subject_t pump_target_text;
 extern lv_subject_t pump_pressure;
 extern lv_subject_t pump_pressure_text;
+extern lv_subject_t vario_text;
 
 /**********************
  * GLOBAL PROTOTYPES
