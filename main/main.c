@@ -62,6 +62,27 @@ static lv_chart_series_t * monitor_chart_series = NULL;
  * that shows up exactly as "it never stops closing/opening even once
  * we're basically at setpoint."
  *
+ * pressure_lpf: an EMA low-pass filter (epid_util_lpf_*) smooths the raw
+ * `pressure` reading before it reaches the PID, since the sensor's noise
+ * was directly translating into P-term chatter (the valve hunting back
+ * and forth once near target).
+ *
+ * Anti-windup here is "conditional integration": if y_out is already
+ * pinned at VALVE_POS_MIN/MAX and this cycle's correction would push it
+ * further past that same limit, the integrator is frozen for that
+ * cycle instead of accumulating. Just clamping i_term's magnitude (the
+ * old approach) still let the integrator wind up slowly over many
+ * saturated cycles, which is what produced the slow settle / overshoot
+ * seen in the logged run.
+ *
+ * Gain scheduling was tried (coarse-far / fine-near) and dropped: it
+ * meant the recovery from overshoot used the weak "fine" gains right
+ * when a fast pull-back was needed most, so y_out crept down 10x too
+ * slowly to catch the overshoot. A single, symmetric gain set (below)
+ * fixes that - it's just as willing to back off as it is to approach,
+ * and the pressure low-pass filter (not lower gains) is what keeps
+ * noise from causing chatter near target.
+ *
  * The valve itself takes ~70 s for a full 0-100 stroke (i.e. ~0.7 %/s),
  * so the control loop is intentionally run slowly (every
  * PRESSURE_PID_SAMPLE_PERIOD_S) instead of on every 10 ms tick - running
@@ -77,25 +98,31 @@ static lv_chart_series_t * monitor_chart_series = NULL;
  * was left at, e.g. its very first init value) so enabling auto doesn't
  * cause a sudden jump in commanded position. ------------------------------------------------ */
 
-#define PRESSURE_PID_SAMPLE_PERIOD_S   5.0f     /* control loop period [s] */
+#define PRESSURE_PID_SAMPLE_PERIOD_S   0.25f     /* control loop period [s] - was 5s, now runs more often */
 #define PRESSURE_PID_SAMPLE_PERIOD_MS  ((uint32_t)(PRESSURE_PID_SAMPLE_PERIOD_S * 1000.0f))
 
-#define VALVE_POS_MIN                  5.0f
-#define VALVE_POS_MAX                  90.0f
+/* Full authority restored - large errors may genuinely need to push
+ * past the "most effective" ~25% band to get there faster, even if
+ * each extra % buys less flow change up there. */
+#define VALVE_POS_MIN                  0.0f
+#define VALVE_POS_MAX                  100.0f
 
-/* --- Starting-point tuning only: these WILL need to be tuned on the
- * actual rig (e.g. step the target_pressure and watch the response). --- */
-#define PRESSURE_PID_KP                2.0f     /* % valve opening per unit of pressure error */
-#define PRESSURE_PID_TI                40.0f    /* integral time constant [s] */
+/* Single gain set, used both approaching and backing off - see the
+ * comment above for why an asymmetric coarse/fine split was dropped. */
+#define PRESSURE_PID_KP                1.0f
+#define PRESSURE_PID_TI                0.3f
 #define PRESSURE_PID_TD                0.0f     /* derivative disabled: pressure feedback is noisy
                                                   * and the valve is far too slow for a D-term to help */
-#define PRESSURE_PID_I_LIMIT           50.0f     /* anti-windup clamp on the I-term */
-#define PRESSURE_DEADBAND              1.0f      /* [kPa, or whatever unit `pressure` is in] -
-                                                   * hold output when |error| is inside this band */
+#define PRESSURE_PID_I_LIMIT           30.0f     /* anti-windup clamp on the I-term */
+#define PRESSURE_DEADBAND              0.1f      /* [kPa, or whatever unit `pressure` is in] -
+                                                   * hold output when |error| is inside this band. */
 
-static epid_t pressure_pid;
-static bool   pressure_pid_ready = false;
-static bool   auto_enabled_prev  = false;
+static epid_t     pressure_pid;
+static epid_lpf_t pressure_lpf;   /* smooths the noisy pressure reading before it hits the PID */
+static bool       pressure_pid_ready = false;
+static bool       auto_enabled_prev  = false;
+
+#define PRESSURE_LPF_SMOOTHING  0.3f /* 0 < a < 1; lower = smoother/slower to react to real changes */
 
 /* Call once, after `pressure` and `current_pose` hold a valid first reading. */
 static void pressure_pid_init(void)
@@ -109,6 +136,13 @@ static void pressure_pid_init(void)
         pressure_pid_ready = false;
         return;
     }
+
+    if (epid_util_lpf_init(&pressure_lpf, PRESSURE_LPF_SMOOTHING, pressure) != EPID_ERR_NONE) {
+        ESP_LOGE(TAG, "pressure LPF init failed");
+        pressure_pid_ready = false;
+        return;
+    }
+
     pressure_pid_ready = true;
 }
 
@@ -119,11 +153,17 @@ static void pressure_pid_update(void)
         return;
     }
 
+    /* Smooth the raw pressure reading before it feeds the PID - cuts down
+     * the P-term chatter that was causing the valve to hunt back and
+     * forth once close to target. */
+    epid_util_lpf_calc(&pressure_lpf, pressure);
+    float filt_pressure = pressure_lpf.y;
+
     if (auto_enabled && !auto_enabled_prev) {
         /* Just switched into auto: bumpless transfer so the valve doesn't
          * jump - resume from where it physically is right now. */
         pressure_pid.y_out = current_pose;
-        pressure_pid.xk_1  = pressure;
+        pressure_pid.xk_1  = filt_pressure;
         ESP_LOGI(TAG, "pid: auto enabled, bumpless transfer y_out=%.2f xk_1=%.2f",
                  pressure_pid.y_out, pressure_pid.xk_1);
     }
@@ -134,36 +174,51 @@ static void pressure_pid_update(void)
     }
 
     /* Positive `error` = pressure too high = this is the case where you
-     * said we need to close the valve further (increase pose). */
-    float error = pressure - target_pressure;
+     * said we need to close the valve further (increase pose). Computed
+     * against the filtered reading so the deadband isn't just chasing noise. */
+    float error = filt_pressure - target_pressure;
 
     if (fabsf(error) < PRESSURE_DEADBAND) {
-        ESP_LOGI(TAG, "pid: error=%.2f within deadband (%.2f) - holding y_out=%.2f",
-                 error, PRESSURE_DEADBAND, pressure_pid.y_out);
+        ESP_LOGI(TAG, "pid: pressure=%.2f filt=%.2f error=%.2f within deadband (%.2f) - holding y_out=%.2f",
+                 pressure, filt_pressure, error, PRESSURE_DEADBAND, pressure_pid.y_out);
         /* Still update xk_1 so the next real correction starts from a
          * fresh baseline, but don't touch y_out. */
-        pressure_pid.xk_1 = pressure;
+        pressure_pid.xk_1 = filt_pressure;
         return;
     }
 
-    /* e[k] = target_pressure - pressure, computed internally by the library. */
-    epid_pi_calc(&pressure_pid, target_pressure, pressure);
+    /* e[k] = target_pressure - filt_pressure, computed internally by the library. */
+    epid_pi_calc(&pressure_pid, target_pressure, filt_pressure);
 
     /* Flip to match the physical direction described above: positive
      * error (pressure too high) must increase the output (close further). */
     pressure_pid.p_term = -pressure_pid.p_term;
     pressure_pid.i_term = -pressure_pid.i_term;
 
-    /* Anti-windup: clamp the (already direction-corrected) I-term. */
-    epid_util_ilim(&pressure_pid, -PRESSURE_PID_I_LIMIT, PRESSURE_PID_I_LIMIT);
+    /* Anti-windup, done properly: if the output is already sitting at a
+     * limit AND this cycle's correction would push it further past that
+     * same limit, freeze the integrator instead of letting it keep
+     * accumulating. Just clamping i_term's magnitude (as before) still
+     * let the integrator wind up over many cycles while saturated,
+     * which is exactly what caused the slow unwind / overshoot in the
+     * logged run. */
+    float delta = pressure_pid.p_term + pressure_pid.i_term;
+    bool  pinned_high = (pressure_pid.y_out >= VALVE_POS_MAX) && (delta > 0.0f);
+    bool  pinned_low  = (pressure_pid.y_out <= VALVE_POS_MIN) && (delta < 0.0f);
+    if (pinned_high || pinned_low) {
+        pressure_pid.i_term = 0.0f;
+    } else {
+        epid_util_ilim(&pressure_pid, -PRESSURE_PID_I_LIMIT, PRESSURE_PID_I_LIMIT);
+    }
 
     /* y[k] = y[k-1] + P[k] + I[k], clamped to the valve's physical range. */
     epid_pi_sum(&pressure_pid, VALVE_POS_MIN, VALVE_POS_MAX);
 
     ESP_LOGI(TAG,
-             "pid: pressure=%.2f target=%.2f error=%.2f p=%.2f i=%.2f y_out=%.2f current_pose=%.2f",
-             pressure, target_pressure, error,
-             pressure_pid.p_term, pressure_pid.i_term, pressure_pid.y_out, current_pose);
+             "pid: pressure=%.2f filt=%.2f target=%.2f error=%.2f p=%.2f i=%.2f d=%.2f y_out=%.2f current_pose=%.2f%s",
+             pressure, filt_pressure, target_pressure, error,
+             pressure_pid.p_term, pressure_pid.i_term, pressure_pid.d_term, pressure_pid.y_out, current_pose,
+             (pinned_high || pinned_low) ? " [sat]" : "");
 
     set_valve_pose(pressure_pid.y_out);
 }
