@@ -1,0 +1,94 @@
+#include "controller.h"
+#include <stdlib.h>
+#include <esp_log.h>
+
+extern float pressure;
+extern float current_pose;
+extern float target_pressure;
+extern bool auto_enabled;
+extern void set_valve_pose(float pose);
+
+static const char* TAG = "controller";
+
+void pressure_pid_init(void)
+{
+    epid_info_t info = epid_init_T(&pressure_pid,
+                                    pressure, pressure, current_pose,
+                                    PRESSURE_PID_KP, PRESSURE_PID_TI, PRESSURE_PID_TD,
+                                    PRESSURE_PID_SAMPLE_PERIOD_S);
+    if (info != EPID_ERR_NONE) {
+        ESP_LOGE(TAG, "pressure PID init failed (code %u)", info);
+        pressure_pid_ready = false;
+        return;
+    }
+
+    if (epid_util_lpf_init(&pressure_lpf, PRESSURE_LPF_SMOOTHING, pressure) != EPID_ERR_NONE) {
+        ESP_LOGE(TAG, "pressure LPF init failed");
+        pressure_pid_ready = false;
+        return;
+    }
+
+    pressure_pid_ready = true;
+}
+
+void pressure_pid_update(void)
+{
+    if (!pressure_pid_ready) {
+        return;
+    }
+
+    epid_util_lpf_calc(&pressure_lpf, pressure); // ?
+    float filt_pressure = pressure_lpf.y;
+
+    if (auto_enabled && !auto_enabled_prev) {
+        pressure_pid.y_out = current_pose;
+        pressure_pid.xk_1  = filt_pressure;
+        ESP_LOGI(TAG, "pid: auto enabled, bumpless transfer y_out=%.2f xk_1=%.2f",
+                 pressure_pid.y_out, pressure_pid.xk_1);
+    }
+    auto_enabled_prev = auto_enabled;
+
+    if (!auto_enabled) {
+        return;
+    }
+
+    /* Positive `error` = pressure too high = this is the case where you
+     * said we need to close the valve further (increase pose). Computed
+     * against the filtered reading so the deadband isn't just chasing noise. */
+    float error = filt_pressure - target_pressure;
+
+    if (fabsf(error) < PRESSURE_DEADZONE) {
+        ESP_LOGI(TAG, "pid: pressure=%.2f filt=%.2f error=%.2f within deadzone (%.2f) - holding y_out=%.2f",
+                 pressure, filt_pressure, error, PRESSURE_DEADZONE, pressure_pid.y_out);
+        pressure_pid.xk_1 = filt_pressure;
+        return;
+    }
+
+    /* e[k] = target_pressure - filt_pressure, computed internally by the library. */
+    epid_pi_calc(&pressure_pid, target_pressure, filt_pressure);
+
+    /* Flip to match the physical direction described above: positive
+     * error (pressure too high) must increase the output (close further). */
+    pressure_pid.p_term = -pressure_pid.p_term;
+    pressure_pid.i_term = -pressure_pid.i_term;
+
+    float delta = pressure_pid.p_term + pressure_pid.i_term;
+    bool  pinned_high = (pressure_pid.y_out >= VALVE_POS_MAX) && (delta > 0.0f);
+    bool  pinned_low  = (pressure_pid.y_out <= VALVE_POS_MIN) && (delta < 0.0f);
+    if (pinned_high || pinned_low) {
+        pressure_pid.i_term = 0.0f;
+    } else {
+        epid_util_ilim(&pressure_pid, -PRESSURE_PID_I_LIMIT, PRESSURE_PID_I_LIMIT);
+    }
+
+    /* y[k] = y[k-1] + P[k] + I[k], clamped to the valve's physical range. */
+    epid_pi_sum(&pressure_pid, VALVE_POS_MIN, VALVE_POS_MAX);
+
+    ESP_LOGI(TAG,
+             "pid: pressure=%.2f filt=%.2f target=%.2f error=%.2f p=%.2f i=%.2f d=%.2f y_out=%.2f current_pose=%.2f%s",
+             pressure, filt_pressure, target_pressure, error,
+             pressure_pid.p_term, pressure_pid.i_term, pressure_pid.d_term, pressure_pid.y_out, current_pose,
+             (pinned_high || pinned_low) ? " [sat]" : "");
+
+    set_valve_pose(pressure_pid.y_out);
+}
