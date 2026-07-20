@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <inttypes.h>
 
 #include <driver/i2c_master.h>

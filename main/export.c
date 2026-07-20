@@ -6,6 +6,7 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <unistd.h> /* fsync() */
 
 #include <esp_log.h>
 #include <esp_timer.h>
@@ -221,6 +222,7 @@ static void export_record_start_cb(lv_event_t * e)
 
     fprintf(export_file, "time_s,pressure_kpa,valve_pose_pct\n");
     fflush(export_file);
+    fsync(fileno(export_file)); /* fflush alone doesn't commit FAT data + dir-entry size to the card */
 
     export_elapsed_s     = 0.0f;
     export_log_accum_s   = 0.0f;
@@ -303,7 +305,9 @@ void export_record_tick(void)
         export_log_accum_s = fmodf(export_log_accum_s, export_log_interval_s);
 
         fprintf(export_file, "%.2f,%.2f,%.2f\n", export_elapsed_s, pressure, current_pose);
-        fflush(export_file); /* survive an abrupt power-off with only the last interval lost */
+        fflush(export_file);
+        fsync(fileno(export_file)); /* commit data + dir-entry size so an abrupt power-off only
+                                      * loses the last interval, instead of the whole file */
 
         if (esp_lv_adapter_lock(EXPORT_UI_LOCK_TIMEOUT_MS) == ESP_OK) {
             export_update_status_label();
