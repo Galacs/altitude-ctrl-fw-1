@@ -37,6 +37,7 @@ void set_valve_pose(float pose);
    SensorsAMsg samples (pressure is in kPa, vario is reported in Pa/s) */
 static float   vario_last_pressure_kpa = 100.0f;
 static int64_t vario_last_time_us      = 0;
+#define VARIO_MIN_DT_S 15.0f /* min gap before trusting a dt for the derivative */
 
 lv_obj_t* parent = NULL;
 
@@ -85,15 +86,24 @@ void on_sensors_a(const can_frame_t *frame) {
     pressure = msg->pressure;
 
     int64_t now_us = esp_timer_get_time();
-    float vario_pa_s = 0.0f;
     if (vario_last_time_us != 0) {
         float dt_s = (now_us - vario_last_time_us) / 1000000.0f;
-        if (dt_s > 0.0f) {
-            vario_pa_s = (pressure - vario_last_pressure_kpa) * 1000.0f / dt_s;
+        if (dt_s >= VARIO_MIN_DT_S) {
+            float vario_pa_s = (pressure - vario_last_pressure_kpa) * 1000.0f / dt_s;
+            vario_last_pressure_kpa = pressure;
+            vario_last_time_us      = now_us;
+
+            if (esp_lv_adapter_lock(-1) == ESP_OK) {
+                char vario_buf[32];
+                snprintf(vario_buf, sizeof(vario_buf), "%.1f Pa/s", vario_pa_s);
+                lv_subject_copy_string(&vario_text, vario_buf);
+                esp_lv_adapter_unlock();
+            }
         }
+    } else {
+        vario_last_pressure_kpa = pressure;
+        vario_last_time_us      = now_us;
     }
-    vario_last_pressure_kpa = pressure;
-    vario_last_time_us      = now_us;
 
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         lv_subject_set_int(&pump_pressure, (int) msg->pressure);
@@ -101,10 +111,6 @@ void on_sensors_a(const can_frame_t *frame) {
         char buf[32];
         snprintf(buf, sizeof(buf), "%.1f kPa", msg->pressure);
         lv_subject_copy_string(&pump_pressure_text, buf);
-
-        char vario_buf[32];
-        snprintf(vario_buf, sizeof(vario_buf), "%.1f Pa/s", vario_pa_s);
-        lv_subject_copy_string(&vario_text, vario_buf);
 
         esp_lv_adapter_unlock();
     }
@@ -659,28 +665,43 @@ void app_main(void) {
     uint32_t chart_tick_ms = 0;
     uint32_t profile_run_tick_ms = 0;
     uint32_t export_run_tick_ms = 0;
+    int64_t  last_loop_us = esp_timer_get_time();
     while (1) {
         can_manager_update(&can_mgr);   // dispatches all received frames
 
-        pid_tick_ms += 10;
+        int64_t now_us = esp_timer_get_time();
+        uint32_t elapsed_ms = (uint32_t)((now_us - last_loop_us) / 1000);
+        last_loop_us = now_us;
+        if (elapsed_ms == 0) {
+            elapsed_ms = 1;
+        }
+
+        pid_tick_ms += elapsed_ms;
         if (pid_tick_ms >= PRESSURE_PID_SAMPLE_PERIOD_MS) {
             pid_tick_ms = 0;
             pressure_pid_update();
         }
 
-        chart_tick_ms += 10;
+        chart_tick_ms += elapsed_ms;
         if (chart_tick_ms >= MONITOR_CHART_SAMPLE_PERIOD_MS) {
             chart_tick_ms = 0;
             monitor_chart_update();
         }
 
-        profile_run_tick_ms += 10;
+        profile_run_tick_ms += elapsed_ms;
         if (profile_run_tick_ms >= PROFILE_RUN_SAMPLE_PERIOD_MS) {
             profile_run_tick_ms = 0;
             profile_run_update();
         }
 
-        export_run_tick_ms = 10;
+        /* NOTE: this was previously `export_run_tick_ms = 10;` (assignment,
+         * not accumulation), which pinned the counter at 10 forever so this
+         * block never fired. Fixed to accumulate like the others. It was
+         * also calling profile_run_update() again, identical to the block
+         * above but on a 100ms period instead of PROFILE_RUN_SAMPLE_PERIOD_MS
+         * - please confirm whether that's really the intended call, or
+         * whether this should be calling something export-specific instead. */
+        export_run_tick_ms += elapsed_ms;
         if (export_run_tick_ms >= 100) {
             export_run_tick_ms = 0;
             profile_run_update();

@@ -8,7 +8,7 @@
 #define VALVE_POS_MAX                  100.0f
 
 #define PRESSURE_PID_KP                1.0f
-#define PRESSURE_PID_TI                0.3f
+#define PRESSURE_PID_TI                0.15f
 #define PRESSURE_PID_TD                0.0f // No effect
 #define PRESSURE_PID_I_LIMIT           30.0f
 #define PRESSURE_DEADZONE              0.1f
