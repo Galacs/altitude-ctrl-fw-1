@@ -10,6 +10,7 @@
 #include "keypad.h"
 #include "can_manager.h"
 #include "controller.h"
+#include "export.h"
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -300,11 +301,14 @@ typedef enum {
     PROFILE_RUN_PAUSED,
 } profile_run_state_t;
 
-static profile_run_state_t profile_run_state = PROFILE_RUN_STOPPED;
-static float                profile_elapsed_s = 0.0f; /* seconds into the current run; preserved across pause */
+static profile_run_state_t profile_run_state    = PROFILE_RUN_STOPPED;
+static float                profile_elapsed_s    = 0.0f;
+static int64_t              profile_run_last_us  = 0;
 
 #define PROFILE_RUN_SAMPLE_PERIOD_S   0.25f
 #define PROFILE_RUN_SAMPLE_PERIOD_MS  ((uint32_t)(PROFILE_RUN_SAMPLE_PERIOD_S * 1000.0f))
+
+#define PROFILE_UI_LOCK_TIMEOUT_MS 20
 
 /* Linear interpolation of the loaded profile at t_s seconds into the run.
  * Clamps to the first point before t=0, and HOLDS the last point's value
@@ -346,7 +350,7 @@ static void profile_apply_target(float value)
     char buf[32];
     snprintf(buf, sizeof(buf), "%.1f kPa", value);
 
-    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+    if (esp_lv_adapter_lock(PROFILE_UI_LOCK_TIMEOUT_MS) == ESP_OK) {
         lv_subject_copy_string(&pump_target_text, buf);
         esp_lv_adapter_unlock();
     }
@@ -385,21 +389,24 @@ static void profile_run_update_ui_labels(void)
     char clock_buf[24];
     profile_run_format_clock(clock_buf, sizeof(clock_buf), profile_elapsed_s);
 
-    if (esp_lv_adapter_lock(-1) == ESP_OK) {
+    if (esp_lv_adapter_lock(PROFILE_UI_LOCK_TIMEOUT_MS) == ESP_OK) {
         lv_subject_copy_string(&run_state_text, profile_run_state_label(profile_run_state));
         lv_subject_copy_string(&run_time_text, clock_buf);
         esp_lv_adapter_unlock();
     }
 }
 
-/* Called every PROFILE_RUN_SAMPLE_PERIOD_MS from app_main's loop. No-op
- * unless a run is actively RUNNING (paused/stopped just holds still). */
 static void profile_run_update(void)
 {
     if (profile_run_state != PROFILE_RUN_RUNNING) return;
     if (profile_point_count == 0) return;
 
-    profile_elapsed_s += PROFILE_RUN_SAMPLE_PERIOD_S;
+    int64_t now_us = esp_timer_get_time();
+    float   dt_s    = (float)(now_us - profile_run_last_us) / 1000000.0f;
+    profile_run_last_us = now_us;
+    if (dt_s < 0.0f) dt_s = 0.0f; /* guard against a first call / timer wraparound */
+
+    profile_elapsed_s += dt_s;
     profile_apply_target(profile_interpolate(profile_elapsed_s));
     profile_run_update_ui_labels();
 }
@@ -420,7 +427,8 @@ void run_start_cb(lv_event_t * e)
     if (profile_run_state == PROFILE_RUN_STOPPED) {
         profile_elapsed_s = 0.0f;
     }
-    profile_run_state = PROFILE_RUN_RUNNING;
+    profile_run_state   = PROFILE_RUN_RUNNING;
+    profile_run_last_us = esp_timer_get_time();
     profile_apply_target(profile_interpolate(profile_elapsed_s));
     profile_run_update_ui_labels();
     ESP_LOGI(TAG, "profile run: start at t=%.2fs", profile_elapsed_s);
@@ -438,7 +446,8 @@ void run_pause_resume_cb(lv_event_t * e)
             ESP_LOGI(TAG, "profile run: paused at t=%.2fs", profile_elapsed_s);
             break;
         case PROFILE_RUN_PAUSED:
-            profile_run_state = PROFILE_RUN_RUNNING;
+            profile_run_state   = PROFILE_RUN_RUNNING;
+            profile_run_last_us = esp_timer_get_time();
             profile_run_update_ui_labels();
             ESP_LOGI(TAG, "profile run: resumed at t=%.2fs", profile_elapsed_s);
             break;
@@ -620,6 +629,7 @@ void app_main(void) {
         lv_screen_load(parent);
         profiles_ui_init();
         monitor_chart_init();
+        export_ui_init();
         esp_lv_adapter_unlock();
     }
 
@@ -648,6 +658,7 @@ void app_main(void) {
     uint32_t pid_tick_ms = 0;
     uint32_t chart_tick_ms = 0;
     uint32_t profile_run_tick_ms = 0;
+    uint32_t export_run_tick_ms = 0;
     while (1) {
         can_manager_update(&can_mgr);   // dispatches all received frames
 
@@ -668,6 +679,14 @@ void app_main(void) {
             profile_run_tick_ms = 0;
             profile_run_update();
         }
+
+        export_run_tick_ms = 10;
+        if (export_run_tick_ms >= 100) {
+            export_run_tick_ms = 0;
+            profile_run_update();
+        }
+
+        export_record_tick();
 
         vTaskDelay(pdMS_TO_TICKS(10));
     }

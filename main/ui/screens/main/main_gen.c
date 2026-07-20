@@ -414,15 +414,16 @@ lv_obj_t * main_create(void)
         lv_obj_set_x(export_explorer_container, 20);
         lv_obj_set_y(export_explorer_container, 80);
         lv_obj_set_width(export_explorer_container, 960);
-        lv_obj_set_height(export_explorer_container, 380);
+        lv_obj_set_height(export_explorer_container, 370);
         lv_obj_add_style(export_explorer_container, &style_dropdown, 0);
 
-        lv_obj_t * export_delete_btn = button_create(lv_tabview_tab_2, "Supprimer", lv_color_hex(0xbb0d0d), lv_color_hex(0x05e804), 45, 150);
-        lv_obj_set_name(export_delete_btn, "export_delete_btn");
-        lv_obj_set_x(export_delete_btn, 20);
-        lv_obj_set_y(export_delete_btn, 470);
-        lv_obj_add_style(export_delete_btn, &style_card, 0);
-        lv_obj_add_event_cb(export_delete_btn, export_delete_selected_cb, LV_EVENT_CLICKED, NULL);
+        lv_obj_t * export_controls_container = lv_obj_create(lv_tabview_tab_2);
+        lv_obj_set_name(export_controls_container, "export_controls_container");
+        lv_obj_set_x(export_controls_container, 20);
+        lv_obj_set_y(export_controls_container, 460);
+        lv_obj_set_width(export_controls_container, 960);
+        lv_obj_set_height(export_controls_container, 50);
+        lv_obj_add_style(export_controls_container, &style_card, 0);
 
         lv_obj_t * lv_tabview_tab_3 = lv_tabview_add_tab(lv_tabview_0, "Vide");
         lv_obj_set_flag(lv_tabview_tab_3, LV_OBJ_FLAG_SCROLLABLE, false);

@@ -304,17 +304,13 @@
 					</lv_label>
 				</lv_obj>
 
-				<!-- Empty mount point - the lv_file_explorer widget itself is
-				     created from C (export_ui_init), same pattern as
-				     profile_explorer_container on the Stats tab. -->
-				<lv_obj name="export_explorer_container" x="20" y="80" width="960" height="380">
+				<lv_obj name="export_explorer_container" x="20" y="80" width="960" height="370">
 					<style name="style_dropdown" />
 				</lv_obj>
 
-				<button name="export_delete_btn" x="20" y="470" width="150" height="45" text="Supprimer">
+				<lv_obj name="export_controls_container" x="20" y="460" width="960" height="50">
 					<style name="style_card" />
-					<event_cb trigger="clicked" callback="export_delete_selected_cb" />
-				</button>
+				</lv_obj>
 			</lv_tabview-tab>
 
 			<lv_tabview-tab text="Vide" scrollable="false" />
