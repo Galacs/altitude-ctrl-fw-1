@@ -32,6 +32,7 @@ float current_pose = 0.0;
 float target_pressure = 90.0;
 bool auto_enabled = false;
 void set_valve_pose(float pose);
+void enable_pump(bool enable, bool update_btn);
 
 /* Variometer: rate of pressure change, derived from consecutive
    SensorsAMsg samples (pressure is in kPa, vario is reported in Pa/s) */
@@ -209,9 +210,28 @@ void toggle_btn_callback(lv_event_t * e) {
 
 void pump_enable_callback(lv_event_t * e) {
     lv_obj_t * btn = lv_event_get_target(e);
+    bool enable = !lv_obj_has_state(btn, LV_STATE_CHECKED);
+    enable_pump(enable, false);
+}
+
+void enable_pump(bool enable, bool update_btn) {
     VaccumMsg msg;
-    msg.en_a = !lv_obj_has_state(btn, LV_STATE_CHECKED);
+    msg.en_a = enable;
     CAN_SEND_STRUCT(&can_mgr, VaccumMsg, msg);
+
+    if (update_btn) {
+        if (esp_lv_adapter_lock(-1) == ESP_OK) {
+            lv_obj_t * btn = lv_obj_find_by_name(parent, "pump_en_btn");
+            if (btn != NULL) {
+                if (enable) {
+                    lv_obj_add_state(btn, LV_STATE_CHECKED);
+                } else {
+                    lv_obj_remove_state(btn, LV_STATE_CHECKED);
+                }
+            }
+            esp_lv_adapter_unlock();
+        }
+    }
 }
 
 void export_delete_selected_cb(lv_event_t * e) {}
