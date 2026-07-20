@@ -7,6 +7,7 @@ extern float current_pose;
 extern float target_pressure;
 extern bool auto_enabled;
 extern void set_valve_pose(float pose);
+extern void enable_pump(bool enable, bool update_btn);
 
 static const char* TAG = "controller";
 
@@ -56,6 +57,16 @@ void pressure_pid_update(void)
      * said we need to close the valve further (increase pose). Computed
      * against the filtered reading so the deadband isn't just chasing noise. */
     float error = filt_pressure - target_pressure;
+
+    if (error > PUMP_ON_ERROR) {
+        // pid_pump_on = true;
+        enable_pump(true, true);
+        ESP_LOGI(TAG, "pid: error=%.2f below %.1f, auto-enabling pump", error, PUMP_ON_ERROR);
+    } else if (error < PUMP_OFF_ERROR) {
+        // pid_pump_on = false;
+        enable_pump(false, true);
+        ESP_LOGI(TAG, "pid: error=%.2f above %.1f, auto-disabling pump", error, PUMP_OFF_ERROR);
+    }
 
     if (fabsf(error) < PRESSURE_DEADZONE) {
         ESP_LOGI(TAG, "pid: pressure=%.2f filt=%.2f error=%.2f within deadzone (%.2f) - holding y_out=%.2f",

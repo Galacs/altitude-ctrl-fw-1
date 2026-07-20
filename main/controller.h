@@ -13,10 +13,14 @@
 #define PRESSURE_PID_I_LIMIT           30.0f
 #define PRESSURE_DEADZONE              0.1f
 
+#define PUMP_ON_ERROR -10
+#define PUMP_OFF_ERROR -5
+
 static epid_t     pressure_pid;
 static epid_lpf_t pressure_lpf;
 static bool       pressure_pid_ready = false;
 static bool       auto_enabled_prev  = false;
+static bool       pid_pump_on = false;
 
 #define PRESSURE_LPF_SMOOTHING  0.3f /* 0 < a < 1; lower = smoother/slower to react to real changes */
 
