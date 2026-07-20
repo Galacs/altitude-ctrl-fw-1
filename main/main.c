@@ -253,7 +253,7 @@ void from_comp_callback(lv_event_t * e) {
 #define FS_DRIVE_PREFIX_LEN 2
 
 static int32_t profile_time[PROFILE_MAX_POINTS];      /* seconds */
-static int32_t profile_pressure[PROFILE_MAX_POINTS];  /* tenths of kPa, NOT inverted */
+static float profile_pressure[PROFILE_MAX_POINTS];
 static size_t  profile_point_count = 0;
  
 static lv_chart_series_t * profile_series = NULL; /* set once in profiles_ui_init() */
@@ -306,7 +306,7 @@ static bool profile_load(const char * real_path)
         float p_kpa;
         if(sscanf(line, "%d,%f", &t_sec, &p_kpa) == 2) {
             profile_time[profile_point_count]     = t_sec;
-            profile_pressure[profile_point_count] = (int32_t)(p_kpa);
+            profile_pressure[profile_point_count] = p_kpa;
             profile_point_count++;
         }
     }
