@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <stdio.h>
 
 #include <driver/i2c_master.h>
 #include <esp_log.h>
@@ -267,14 +268,18 @@ static int32_t              profile_actual_elapsed_s   = 0;    /* running x-valu
  
 extern lv_obj_t * parent; /* set in app_main after main_create() */
 
-/* preview_x_axis tick labels (Stats tab). The chart's x-range is the
- * loaded profile's actual duration (see profile_chart_redraw() below),
- * so unlike monitor_x_axis (fixed "-50m ... 0" range) these have to be
- * recomputed every time a profile is loaded. 6 labels to match
- * profile_preview_chart's ver_div_line_count="6". */
 #define PREVIEW_X_AXIS_LABEL_COUNT 6
 static char        preview_x_axis_labels[PREVIEW_X_AXIS_LABEL_COUNT][8]; /* "HH:MM\0" */
 static const char * preview_x_axis_text_src[PREVIEW_X_AXIS_LABEL_COUNT + 1]; /* + NULL terminator */
+
+static void format_clock_fields(int32_t major, int32_t minor, char * buf, size_t buf_size)
+{
+    if(major < 0) major = 0;
+    if(major > 99) major = 99;
+    if(minor < 0) minor = 0;
+    if(minor > 99) minor = 99;
+    snprintf(buf, buf_size, "%02" PRId32 ":%02" PRId32, major, minor);
+}
 
 /* Formats a duration in seconds as "HH:MM" (zero-padded, no seconds). */
 static void format_duration_hhmm(int32_t seconds, char * buf, size_t buf_size)
@@ -283,7 +288,15 @@ static void format_duration_hhmm(int32_t seconds, char * buf, size_t buf_size)
     int32_t total_min = seconds / 60;
     int32_t hours     = total_min / 60;
     int32_t minutes   = total_min % 60;
-    snprintf(buf, buf_size, "%02" PRId32 ":%02" PRId32, hours, minutes);
+    format_clock_fields(hours, minutes, buf, buf_size);
+}
+
+static void format_duration_mmss(int32_t seconds, char * buf, size_t buf_size)
+{
+    if(seconds < 0) seconds = 0;
+    int32_t minutes = seconds / 60;
+    int32_t secs    = seconds % 60;
+    format_clock_fields(minutes, secs, buf, buf_size);
 }
 
 /* Recomputes preview_x_axis's tick labels ("00:00", "00:05", ...) evenly
@@ -464,16 +477,12 @@ static void profile_run_format_clock(char * buf, size_t buf_len, float elapsed_s
     uint32_t elapsed_u = (elapsed_s > 0.0f) ? (uint32_t)elapsed_s : 0;
     if (elapsed_u > total_s) elapsed_u = total_s;
 
-    uint32_t total_min   = total_s / 60;
-    uint32_t total_sec   = total_s % 60;
-    uint32_t elapsed_min = elapsed_u / 60;
-    uint32_t elapsed_sec = elapsed_u % 60;
+    char elapsed_buf[8]; /* "MM:SS\0" */
+    char total_buf[8];
+    format_duration_mmss((int32_t)elapsed_u, elapsed_buf, sizeof(elapsed_buf));
+    format_duration_mmss((int32_t)total_s,   total_buf,   sizeof(total_buf));
 
-    if (total_min   > 99) total_min   = 99;
-    if (elapsed_min > 99) elapsed_min = 99;
-
-    snprintf(buf, buf_len, "%02" PRIu32 ":%02" PRIu32 " / %02" PRIu32 ":%02" PRIu32,
-             elapsed_min, elapsed_sec, total_min, total_sec);
+    snprintf(buf, buf_len, "%s / %s", elapsed_buf, total_buf);
 }
 
 static void profile_run_update_ui_labels(void)
