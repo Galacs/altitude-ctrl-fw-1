@@ -45,8 +45,9 @@ lv_obj_t* parent = NULL;
 #define MONITOR_CHART_SAMPLE_PERIOD_S   60.0f
 #define MONITOR_CHART_SAMPLE_PERIOD_MS  ((uint32_t)(MONITOR_CHART_SAMPLE_PERIOD_S * 1000.0f))
 
-static lv_obj_t          * monitor_chart_obj    = NULL;
-static lv_chart_series_t * monitor_chart_series = NULL;
+static lv_obj_t          * monitor_chart_obj           = NULL;
+static lv_chart_series_t * monitor_chart_series        = NULL; /* actual pressure */
+static lv_chart_series_t * monitor_chart_target_series = NULL; /* target_pressure setpoint */
 
 CAN_STRUCT(HeartbeatMsg, 0x200,
     uint8_t  counter;
@@ -256,10 +257,52 @@ static int32_t profile_time[PROFILE_MAX_POINTS];      /* seconds */
 static float profile_pressure[PROFILE_MAX_POINTS];
 static size_t  profile_point_count = 0;
  
-static lv_chart_series_t * profile_series = NULL; /* set once in profiles_ui_init() */
+static lv_chart_series_t * profile_series = NULL; /* set once in profiles_ui_init() - loaded target profile */
+static lv_obj_t          * profile_preview_chart_obj = NULL;
+static lv_chart_series_t * profile_actual_series      = NULL; /* live actual pressure, sampled once/minute */
+static int32_t              profile_actual_elapsed_s   = 0;    /* running x-value for profile_actual_series */
+
+#define STATS_CHART_SAMPLE_PERIOD_S   60.0f
+#define STATS_CHART_SAMPLE_PERIOD_MS  ((uint32_t)(STATS_CHART_SAMPLE_PERIOD_S * 1000.0f))
  
 extern lv_obj_t * parent; /* set in app_main after main_create() */
- 
+
+/* preview_x_axis tick labels (Stats tab). The chart's x-range is the
+ * loaded profile's actual duration (see profile_chart_redraw() below),
+ * so unlike monitor_x_axis (fixed "-50m ... 0" range) these have to be
+ * recomputed every time a profile is loaded. 6 labels to match
+ * profile_preview_chart's ver_div_line_count="6". */
+#define PREVIEW_X_AXIS_LABEL_COUNT 6
+static char        preview_x_axis_labels[PREVIEW_X_AXIS_LABEL_COUNT][8]; /* "HH:MM\0" */
+static const char * preview_x_axis_text_src[PREVIEW_X_AXIS_LABEL_COUNT + 1]; /* + NULL terminator */
+
+/* Formats a duration in seconds as "HH:MM" (zero-padded, no seconds). */
+static void format_duration_hhmm(int32_t seconds, char * buf, size_t buf_size)
+{
+    if(seconds < 0) seconds = 0;
+    int32_t total_min = seconds / 60;
+    int32_t hours     = total_min / 60;
+    int32_t minutes   = total_min % 60;
+    snprintf(buf, buf_size, "%02" PRId32 ":%02" PRId32, hours, minutes);
+}
+
+/* Recomputes preview_x_axis's tick labels ("00:00", "00:05", ...) evenly
+ * spaced across [0, total_s] and pushes them to the on-screen scale. */
+static void profile_preview_x_axis_update(int32_t total_s)
+{
+    lv_obj_t * x_axis = lv_obj_find_by_name(parent, "preview_x_axis");
+    if(x_axis == NULL) return;
+
+    for(int i = 0; i < PREVIEW_X_AXIS_LABEL_COUNT; i++) {
+        int32_t t = (int32_t)((int64_t)total_s * i / (PREVIEW_X_AXIS_LABEL_COUNT - 1));
+        format_duration_hhmm(t, preview_x_axis_labels[i], sizeof(preview_x_axis_labels[i]));
+        preview_x_axis_text_src[i] = preview_x_axis_labels[i];
+    }
+    preview_x_axis_text_src[PREVIEW_X_AXIS_LABEL_COUNT] = NULL;
+
+    lv_scale_set_text_src(x_axis, preview_x_axis_text_src);
+}
+
 static void profile_chart_redraw(void)
 {
     lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
@@ -271,13 +314,37 @@ static void profile_chart_redraw(void)
        are in ascending time order, which is what a normal profile export
        would look like */
     lv_chart_set_axis_range(chart, LV_CHART_AXIS_PRIMARY_X, 0, profile_time[profile_point_count - 1]);
+    profile_preview_x_axis_update(profile_time[profile_point_count - 1]);
  
     for(size_t i = 0; i < profile_point_count; i++) {
         int32_t plotted_y = profile_pressure[i];
         lv_chart_set_series_value_by_id2(chart, profile_series, (uint32_t)i, profile_time[i], plotted_y);
     }
+
+    /* Restart the live actual-pressure trace's clock so it lines up with
+       t=0 of the (newly) loaded profile. lv_chart_set_point_count() above
+       also clears any previously plotted actual-pressure points, since
+       point count is shared by every series on this chart. */
+    profile_actual_elapsed_s = 0;
  
     lv_chart_refresh(chart);
+}
+
+/* Samples the live `pressure` reading once/minute onto profile_actual_series,
+   so the Stats tab chart shows how the real run compared to the loaded
+   target profile. Called from app_main()'s loop on a 60s tick, same
+   pattern as monitor_chart_update(). */
+static void profile_actual_chart_update(void)
+{
+    if(profile_actual_series == NULL || profile_preview_chart_obj == NULL) return;
+
+    if(esp_lv_adapter_lock(-1) == ESP_OK) {
+        lv_chart_set_next_value2(profile_preview_chart_obj, profile_actual_series,
+                                  profile_actual_elapsed_s, (int32_t)pressure);
+        esp_lv_adapter_unlock();
+    }
+
+    profile_actual_elapsed_s += (int32_t)STATS_CHART_SAMPLE_PERIOD_S;
 }
  
 /* Parses a .alt.csv file: one header row (skipped), then "time_s,pressure_kpa"
@@ -546,8 +613,13 @@ void profiles_ui_init(void)
  
     lv_obj_t * chart = lv_obj_find_by_name(parent, "profile_preview_chart");
     if(chart != NULL) {
+        profile_preview_chart_obj = chart;
         profile_series = lv_chart_add_series(chart, lv_color_hex(0x60a5fa),
                                               LV_CHART_AXIS_PRIMARY_X | LV_CHART_AXIS_PRIMARY_Y);
+        /* live actual pressure, sampled once/minute by profile_actual_chart_update(),
+           overlaid on the loaded target profile so you can compare the two */
+        profile_actual_series = lv_chart_add_series(chart, lv_color_hex(0xfcee01),
+                                                      LV_CHART_AXIS_PRIMARY_X | LV_CHART_AXIS_PRIMARY_Y);
     }
 
     lv_obj_t * explorer = lv_file_explorer_create(container);
@@ -602,6 +674,10 @@ static void monitor_chart_init(void)
 
     monitor_chart_series = lv_chart_add_series(monitor_chart_obj, lv_color_hex(0x60a5fa),
                                                 LV_CHART_AXIS_PRIMARY_Y);
+    /* second series: setpoint the PID is chasing, so it's easy to see actual
+       vs. target at a glance on the same time axis */
+    monitor_chart_target_series = lv_chart_add_series(monitor_chart_obj, lv_color_hex(0xfcee01),
+                                                        LV_CHART_AXIS_PRIMARY_Y);
 }
 
 static void monitor_chart_update(void)
@@ -610,6 +686,9 @@ static void monitor_chart_update(void)
 
     if (esp_lv_adapter_lock(-1) == ESP_OK) {
         lv_chart_set_next_value(monitor_chart_obj, monitor_chart_series, (int32_t)pressure);
+        if (monitor_chart_target_series != NULL) {
+            lv_chart_set_next_value(monitor_chart_obj, monitor_chart_target_series, (int32_t)target_pressure);
+        }
         esp_lv_adapter_unlock();
     }
 }
@@ -682,6 +761,7 @@ void app_main(void) {
 
     uint32_t pid_tick_ms = 0;
     uint32_t chart_tick_ms = 0;
+    uint32_t stats_chart_tick_ms = 0;
     uint32_t profile_run_tick_ms = 0;
     uint32_t export_run_tick_ms = 0;
     int64_t  last_loop_us = esp_timer_get_time();
@@ -705,6 +785,12 @@ void app_main(void) {
         if (chart_tick_ms >= MONITOR_CHART_SAMPLE_PERIOD_MS) {
             chart_tick_ms = 0;
             monitor_chart_update();
+        }
+
+        stats_chart_tick_ms += elapsed_ms;
+        if (stats_chart_tick_ms >= STATS_CHART_SAMPLE_PERIOD_MS) {
+            stats_chart_tick_ms = 0;
+            profile_actual_chart_update();
         }
 
         profile_run_tick_ms += elapsed_ms;
