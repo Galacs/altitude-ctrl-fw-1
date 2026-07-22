@@ -262,6 +262,7 @@ static lv_chart_series_t * profile_series = NULL; /* set once in profiles_ui_ini
 static lv_obj_t          * profile_preview_chart_obj = NULL;
 static lv_chart_series_t * profile_actual_series      = NULL; /* live actual pressure, sampled once/minute */
 static int32_t              profile_actual_elapsed_s   = 0;    /* running x-value for profile_actual_series */
+static lv_chart_cursor_t  * profile_run_cursor         = NULL; /* vertical line at the current playback time */
 
 #define STATS_CHART_SAMPLE_PERIOD_S   60.0f
 #define STATS_CHART_SAMPLE_PERIOD_MS  ((uint32_t)(STATS_CHART_SAMPLE_PERIOD_S * 1000.0f))
@@ -485,6 +486,27 @@ static void profile_run_format_clock(char * buf, size_t buf_len, float elapsed_s
     snprintf(buf, buf_len, "%s / %s", elapsed_buf, total_buf);
 }
 
+static void profile_run_cursor_update(float elapsed_s)
+{
+    if(profile_run_cursor == NULL || profile_preview_chart_obj == NULL) return;
+    if(profile_series == NULL || profile_point_count == 0) return;
+
+    int32_t elapsed_i = (elapsed_s > 0.0f) ? (int32_t)elapsed_s : 0;
+
+    size_t  nearest      = 0;
+    int32_t nearest_diff = -1;
+    for(size_t i = 0; i < profile_point_count; i++) {
+        int32_t diff = elapsed_i - profile_time[i];
+        if(diff < 0) diff = -diff;
+        if(nearest_diff < 0 || diff < nearest_diff) {
+            nearest_diff = diff;
+            nearest      = i;
+        }
+    }
+
+    lv_chart_set_cursor_point(profile_preview_chart_obj, profile_run_cursor, profile_series, (uint32_t)nearest);
+}
+
 static void profile_run_update_ui_labels(void)
 {
     char clock_buf[24];
@@ -493,6 +515,7 @@ static void profile_run_update_ui_labels(void)
     if (esp_lv_adapter_lock(PROFILE_UI_LOCK_TIMEOUT_MS) == ESP_OK) {
         lv_subject_copy_string(&run_state_text, profile_run_state_label(profile_run_state));
         lv_subject_copy_string(&run_time_text, clock_buf);
+        profile_run_cursor_update(profile_elapsed_s);
         esp_lv_adapter_unlock();
     }
 }
@@ -629,6 +652,10 @@ void profiles_ui_init(void)
            overlaid on the loaded target profile so you can compare the two */
         profile_actual_series = lv_chart_add_series(chart, lv_color_hex(0xfcee01),
                                                       LV_CHART_AXIS_PRIMARY_X | LV_CHART_AXIS_PRIMARY_Y);
+        /* vertical bar showing where in the loaded profile's timeline the
+           run currently is - kept in sync with profile_elapsed_s by
+           profile_run_cursor_update() */
+        profile_run_cursor = lv_chart_add_cursor(chart, lv_color_hex(0xef4444), LV_DIR_VER);
     }
 
     lv_obj_t * explorer = lv_file_explorer_create(container);
