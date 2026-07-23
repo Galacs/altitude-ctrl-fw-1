@@ -480,8 +480,8 @@ static void profile_run_format_clock(char * buf, size_t buf_len, float elapsed_s
 
     char elapsed_buf[8]; /* "MM:SS\0" */
     char total_buf[8];
-    format_duration_mmss((int32_t)elapsed_u, elapsed_buf, sizeof(elapsed_buf));
-    format_duration_mmss((int32_t)total_s,   total_buf,   sizeof(total_buf));
+    format_duration_hhmm((int32_t)elapsed_u, elapsed_buf, sizeof(elapsed_buf));
+    format_duration_hhmm((int32_t)total_s,   total_buf,   sizeof(total_buf));
 
     snprintf(buf, buf_len, "%s / %s", elapsed_buf, total_buf);
 }
