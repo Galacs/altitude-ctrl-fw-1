@@ -384,6 +384,14 @@ static void profile_chart_redraw(void)
     lv_chart_refresh(chart);
 }
 
+static void profile_actual_series_reset(void)
+{
+    if(profile_actual_series != NULL && profile_preview_chart_obj != NULL) {
+        lv_chart_set_all_value(profile_preview_chart_obj, profile_actual_series, LV_CHART_POINT_NONE);
+    }
+    profile_actual_elapsed_s = 0;
+}
+
 /* Samples the live `pressure` reading once/minute onto profile_actual_series,
    so the Stats tab chart shows how the real run compared to the loaded
    target profile. Called from app_main()'s loop on a 60s tick, same
@@ -590,6 +598,7 @@ void run_start_cb(lv_event_t * e)
 
     if (profile_run_state == PROFILE_RUN_STOPPED) {
         profile_elapsed_s = 0.0f;
+        profile_actual_series_reset();
     }
     profile_run_state   = PROFILE_RUN_RUNNING;
     profile_run_last_us = esp_timer_get_time();
