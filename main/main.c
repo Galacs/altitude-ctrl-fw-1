@@ -235,6 +235,24 @@ void enable_pump(bool enable, bool update_btn) {
     }
 }
 
+void enable_auto(bool enable, bool update_btn) {
+    auto_enabled = enable;
+
+    if (update_btn) {
+        if (esp_lv_adapter_lock(-1) == ESP_OK) {
+            lv_obj_t * btn = lv_obj_find_by_name(parent, "valve_auto_btn");
+            if (btn != NULL) {
+                if (enable) {
+                    lv_obj_add_state(btn, LV_STATE_CHECKED);
+                } else {
+                    lv_obj_remove_state(btn, LV_STATE_CHECKED);
+                }
+            }
+            esp_lv_adapter_unlock();
+        }
+    }
+}
+
 void export_delete_selected_cb(lv_event_t * e) {}
 
 void from_comp_callback(lv_event_t * e) {
@@ -556,6 +574,9 @@ void run_start_cb(lv_event_t * e)
     profile_apply_target(profile_interpolate(profile_elapsed_s));
     profile_run_update_ui_labels();
     ESP_LOGI(TAG, "profile run: start at t=%.2fs", profile_elapsed_s);
+    if (!auto_enabled) {
+        enable_auto(true, true);
+    }
 }
 
 /* Wired up in main.xml as the "Pause/Resume" button's event_cb. Toggles
