@@ -120,9 +120,9 @@ void on_sensors_a(const can_frame_t *frame) {
 }
 
 void enable_valve(bool enable, bool update_btn) {
-    HomeMsg msg;
-    msg.homed = true;
-    CAN_SEND_STRUCT(&can_mgr, HomeMsg, msg);
+    StepperEnMSG msg;
+    msg.en = enable;
+    CAN_SEND_STRUCT(&can_mgr, StepperEnMSG, msg);
 
     if (update_btn) {
         if (esp_lv_adapter_lock(-1) == ESP_OK) {
@@ -211,6 +211,7 @@ void valve_en_cb(lv_event_t * e) {
 
 void set_valve_pose(float pose) {
     ValvePoseMsg msg;
+    if (pose > 98) pose = 100;
     msg.valve_pose = pose;
     CAN_SEND_STRUCT(&can_mgr, ValvePoseMsg, msg);
 }
@@ -843,6 +844,9 @@ void app_main(void) {
     uint32_t profile_run_tick_ms = 0;
     uint32_t export_run_tick_ms = 0;
     int64_t  last_loop_us = esp_timer_get_time();
+
+    enable_valve(false, true);
+
     while (1) {
         can_manager_update(&can_mgr);   // dispatches all received frames
 
