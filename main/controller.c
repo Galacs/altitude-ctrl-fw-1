@@ -29,6 +29,12 @@ void pressure_pid_init(void)
         return;
     }
 
+    if (epid_util_lpf_init(&pressure_d_lpf, PRESSURE_D_LPF_SMOOTHING, 0.0f) != EPID_ERR_NONE) {
+        ESP_LOGE(TAG, "pressure D-term LPF init failed");
+        pressure_pid_ready = false;
+        return;
+    }
+
     pressure_pid_ready = true;
 }
 
@@ -45,6 +51,7 @@ void pressure_pid_update(void)
         pressure_pid.y_out = current_pose;
         pressure_pid.xk_1  = filt_pressure;
         pressure_pid.xk_2  = filt_pressure;
+        pressure_d_lpf.y   = 0.0f;
         ESP_LOGI(TAG, "pid: auto enabled, bumpless transfer y_out=%.2f xk_1=%.2f xk_2=%.2f",
                  pressure_pid.y_out, pressure_pid.xk_1, pressure_pid.xk_2);
     }
@@ -76,10 +83,15 @@ void pressure_pid_update(void)
     //     return;
     // }
 
+    pressure_pid.y_out = current_pose;
+
     /* e[k] = target_pressure - filt_pressure, computed internally by the library.
      * Using the PID (not PI-only) variant so the D-term is actually computed;
      * epid_pi_calc() never touches d_term at all. */
     epid_pid_calc(&pressure_pid, target_pressure, filt_pressure);
+
+    epid_util_lpf_calc(&pressure_d_lpf, pressure_pid.d_term);
+    pressure_pid.d_term = pressure_d_lpf.y;
 
     /* Flip to match the physical direction described above: positive
      * error (pressure too high) must increase the output (close further). */

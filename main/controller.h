@@ -7,17 +7,19 @@
 #define VALVE_POS_MIN                  0.0f
 #define VALVE_POS_MAX                  100.0f
 
-#define PRESSURE_PID_KP                2.0f
+#define PRESSURE_PID_KP                15.0f
 #define PRESSURE_PID_TI                0.1f
-#define PRESSURE_PID_TD                1.5f
+#define PRESSURE_PID_TD                0.5f
 #define PRESSURE_PID_I_LIMIT           30.0f
 #define PRESSURE_DEADZONE              0.1f
+#define PRESSURE_D_LPF_SMOOTHING       0.2f
 
 #define PUMP_ON_ERROR -10
 #define PUMP_OFF_ERROR -5
 
 static epid_t     pressure_pid;
 static epid_lpf_t pressure_lpf;
+static epid_lpf_t pressure_d_lpf;
 static bool       pressure_pid_ready = false;
 static bool       auto_enabled_prev  = false;
 static bool       pid_pump_on = false;
