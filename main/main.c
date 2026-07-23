@@ -119,6 +119,26 @@ void on_sensors_a(const can_frame_t *frame) {
     // ESP_LOGI("APP", "Heartbeat: cnt=%u, chk=%u", msg->counter, msg->checksum);
 }
 
+void enable_valve(bool enable, bool update_btn) {
+    HomeMsg msg;
+    msg.homed = true;
+    CAN_SEND_STRUCT(&can_mgr, HomeMsg, msg);
+
+    if (update_btn) {
+        if (esp_lv_adapter_lock(-1) == ESP_OK) {
+            lv_obj_t * btn = lv_obj_find_by_name(parent, "valve_en_btn");
+            if (btn != NULL) {
+                if (enable) {
+                    lv_obj_add_state(btn, LV_STATE_CHECKED);
+                } else {
+                    lv_obj_remove_state(btn, LV_STATE_CHECKED);
+                }
+            }
+            esp_lv_adapter_unlock();
+        }
+    }
+}
+
 void on_stepper_status(const can_frame_t *frame) {
     const StepperStatusMsg *msg = (const StepperStatusMsg*) frame->data;
     // ESP_LOGW(TAG, "stallguard status: %d", msg->sg_res);
@@ -170,6 +190,7 @@ static void add_data(lv_timer_t * t)
 }
 
 void valve_home_cb(lv_event_t * e) {
+    enable_valve(true, true);
     HomeMsg msg;
     msg.homed = true;
     CAN_SEND_STRUCT(&can_mgr, HomeMsg, msg);
@@ -184,9 +205,8 @@ void valve_auto_cb(lv_event_t * e) {
 
 void valve_en_cb(lv_event_t * e) {
     lv_obj_t * btn = lv_event_get_target(e);
-    StepperEnMSG msg;
-    msg.en = !lv_obj_has_state(btn, LV_STATE_CHECKED);
-    CAN_SEND_STRUCT(&can_mgr, StepperEnMSG, msg);
+    bool enable = !lv_obj_has_state(btn, LV_STATE_CHECKED);
+    enable_valve(enable, false);
 }
 
 void set_valve_pose(float pose) {
@@ -234,6 +254,7 @@ void enable_pump(bool enable, bool update_btn) {
         }
     }
 }
+
 
 void enable_auto(bool enable, bool update_btn) {
     auto_enabled = enable;
