@@ -15,11 +15,39 @@ static const char* TAG = "controller";
 
 static float feedforward_valve_position(float target_kpa)
 {
-    if (target_kpa >= 100.0f) return FF_VALVE_AT_100KPA;
-    if (target_kpa <= 35.0f)  return FF_VALVE_AT_35KPA;
+    // Clamp to known range
+    if (target_kpa >= ff_pressure_points[0]) 
+        return ff_valve_points[0];
+    if (target_kpa <= ff_pressure_points[FF_NUM_POINTS - 1]) 
+        return ff_valve_points[FF_NUM_POINTS - 1];
 
-    float frac = (100.0f - target_kpa) / FF_PRESSURE_RANGE;
-    return FF_VALVE_AT_100KPA + frac * (FF_VALVE_AT_35KPA - FF_VALVE_AT_100KPA);
+    // Find segment and interpolate
+    for (int i = 1; i < FF_NUM_POINTS; i++) {
+        if (target_kpa <= ff_pressure_points[i - 1] && target_kpa >= ff_pressure_points[i]) {
+            float p0 = ff_pressure_points[i];
+            float p1 = ff_pressure_points[i - 1];
+            float v0 = ff_valve_points[i];
+            float v1 = ff_valve_points[i - 1];
+            float frac = (target_kpa - p0) / (p1 - p0);
+            return v0 + frac * (v1 - v0);
+        }
+    }
+    return ff_valve_points[FF_NUM_POINTS - 1];
+}
+
+static float ff_blend_factor(float error)
+{
+    float abs_err = fabsf(error);
+
+    if (abs_err <= FF_BLEND_NEAR) {
+        return 1.0f;  // Fully active
+    }
+    if (abs_err >= FF_BLEND_FAR) {
+        return 0.0f;  // Fully inactive
+    }
+
+    // Linear ramp: 1.0 at NEAR, 0.0 at FAR
+    return (FF_BLEND_FAR - abs_err) / (FF_BLEND_FAR - FF_BLEND_NEAR);
 }
 
 static void pump_update(float error)
@@ -34,7 +62,7 @@ static void pump_update(float error)
     } else if (error > PUMP_OFF_ERROR_THRESHOLD) {
         want_pump_on = false;
     } else {
-        want_pump_on = pump_state;  // hysteresis
+        want_pump_on = pump_state;
     }
 
     if (target_pressure > PUMP_MAX_PRESSURE_CUTOFF) {
@@ -94,8 +122,9 @@ void pressure_ctrl_init(void)
     pump_last_toggle_us = esp_timer_get_time();
     pressure_ctrl_ready = true;
 
-    ESP_LOGI(TAG, "init OK: Kp=%.2f Ti=%.1f rate_limit=%.1f%%/s",
-             PRESSURE_PID_KP, PRESSURE_PID_TI, VALVE_RATE_LIMIT_PER_S);
+    ESP_LOGI(TAG, "init OK: Kp=%.2f Ti=%.1f rate_limit=%.1f%%/s FF_blend=[%.1f,%.1f]kPa",
+             PRESSURE_PID_KP, PRESSURE_PID_TI, VALVE_RATE_LIMIT_PER_S,
+             FF_BLEND_NEAR, FF_BLEND_FAR);
 }
 
 void pressure_ctrl_update(void)
@@ -136,15 +165,15 @@ void pressure_ctrl_update(void)
         return;
     }
 
-    /* Feedforward */
     float ff_output = feedforward_valve_position(target_pressure);
+    float ff_blend = ff_blend_factor(error);
 
     /* PI calculation */
     epid_pi_calc(&pressure_pid, target_pressure, filt_pressure);
     pressure_pid.p_term = -pressure_pid.p_term;
     pressure_pid.i_term = -pressure_pid.i_term;
 
-    /* Anti-windup: conditional integration */
+    /* Anti-windup */
     float delta = pressure_pid.p_term + pressure_pid.i_term;
     float raw_output = pressure_pid.y_out + delta;
 
@@ -160,22 +189,26 @@ void pressure_ctrl_update(void)
 
     epid_pi_sum(&pressure_pid, VALVE_POS_MIN, VALVE_POS_MAX);
 
-    /* Blend feedforward + PI feedback */
-    float blended_output = 0.6f * ff_output + 0.4f * pressure_pid.y_out;
+    float pi_weight = 1.0f - (ff_blend * FF_WEIGHT_AT_FULL);
+    float ff_weight = ff_blend * FF_WEIGHT_AT_FULL;
+
+    float blended_output = ff_weight * ff_output + pi_weight * pressure_pid.y_out;
 
     if (blended_output > VALVE_POS_MAX) blended_output = VALVE_POS_MAX;
     if (blended_output < VALVE_POS_MIN) blended_output = VALVE_POS_MIN;
 
-    /* CRITICAL: rate limit to match valve max speed */
+    /* Rate limit */
     float rate_limited_output = rate_limit_output(blended_output, valve_output_prev);
     valve_output_prev = rate_limited_output;
 
-    /* Always log - shows command vs actual position */
+    /* Log */
     ESP_LOGI(TAG,
              "ctrl: p=%.2f filt=%.2f tgt=%.2f err=%.2f | "
-             "pi=%.2f ff=%.2f blend=%.2f cmd=%.2f | pose=%.2f%s",
+             "pi=%.2f ff=%.2f blend=%.2f | "
+             "w_pi=%.2f w_ff=%.2f cmd=%.2f | pose=%.2f%s",
              pressure, filt_pressure, target_pressure, error,
-             pressure_pid.y_out, ff_output, blended_output, rate_limited_output,
+             pressure_pid.y_out, ff_output, ff_blend,
+             pi_weight, ff_weight, rate_limited_output,
              current_pose,
              (pinned_high || pinned_low) ? " [sat]" : "");
 

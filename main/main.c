@@ -845,7 +845,7 @@ void app_main(void) {
     // HeartbeatMsg hb = { .counter = 0, .checksum = 0xABCD };
     // CAN_SEND_STRUCT(&can_mgr, HeartbeatMsg, hb);
 
-    pressure_pid_init();
+    pressure_ctrl_init();
 
     uint32_t pid_tick_ms = 0;
     uint32_t chart_tick_ms = 0;
@@ -867,9 +867,9 @@ void app_main(void) {
         }
 
         pid_tick_ms += elapsed_ms;
-        if (pid_tick_ms >= PRESSURE_PID_SAMPLE_PERIOD_MS) {
+        if (pid_tick_ms >= PRESSURE_CTRL_SAMPLE_PERIOD_MS) {
             pid_tick_ms = 0;
-            pressure_pid_update();
+            pressure_ctrl_update();
         }
 
         chart_tick_ms += elapsed_ms;
