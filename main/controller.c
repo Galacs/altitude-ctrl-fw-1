@@ -67,6 +67,9 @@ void pressure_pid_update(void)
         enable_pump(false, true);
         ESP_LOGI(TAG, "pid: error=%.2f above %.1f, auto-disabling pump", error, PUMP_OFF_ERROR);
     }
+    if (target_pressure > 85.0) {
+        enable_pump(false, true);
+    }
 
     if (fabsf(error) < PRESSURE_DEADZONE) {
         ESP_LOGI(TAG, "pid: pressure=%.2f filt=%.2f error=%.2f within deadzone (%.2f) - holding y_out=%.2f",
