@@ -44,8 +44,9 @@ void pressure_pid_update(void)
     if (auto_enabled && !auto_enabled_prev) {
         pressure_pid.y_out = current_pose;
         pressure_pid.xk_1  = filt_pressure;
-        ESP_LOGI(TAG, "pid: auto enabled, bumpless transfer y_out=%.2f xk_1=%.2f",
-                 pressure_pid.y_out, pressure_pid.xk_1);
+        pressure_pid.xk_2  = filt_pressure;
+        ESP_LOGI(TAG, "pid: auto enabled, bumpless transfer y_out=%.2f xk_1=%.2f xk_2=%.2f",
+                 pressure_pid.y_out, pressure_pid.xk_1, pressure_pid.xk_2);
     }
     auto_enabled_prev = auto_enabled;
 
@@ -68,22 +69,25 @@ void pressure_pid_update(void)
         ESP_LOGI(TAG, "pid: error=%.2f above %.1f, auto-disabling pump", error, PUMP_OFF_ERROR);
     }
 
-    if (fabsf(error) < PRESSURE_DEADZONE) {
-        ESP_LOGI(TAG, "pid: pressure=%.2f filt=%.2f error=%.2f within deadzone (%.2f) - holding y_out=%.2f",
-                 pressure, filt_pressure, error, PRESSURE_DEADZONE, pressure_pid.y_out);
-        pressure_pid.xk_1 = filt_pressure;
-        return;
-    }
+    // if (fabsf(error) < PRESSURE_DEADZONE) {
+    //     ESP_LOGI(TAG, "pid: pressure=%.2f filt=%.2f error=%.2f within deadzone (%.2f) - holding y_out=%.2f",
+    //              pressure, filt_pressure, error, PRESSURE_DEADZONE, pressure_pid.y_out);
+    //     pressure_pid.xk_1 = filt_pressure;
+    //     return;
+    // }
 
-    /* e[k] = target_pressure - filt_pressure, computed internally by the library. */
-    epid_pi_calc(&pressure_pid, target_pressure, filt_pressure);
+    /* e[k] = target_pressure - filt_pressure, computed internally by the library.
+     * Using the PID (not PI-only) variant so the D-term is actually computed;
+     * epid_pi_calc() never touches d_term at all. */
+    epid_pid_calc(&pressure_pid, target_pressure, filt_pressure);
 
     /* Flip to match the physical direction described above: positive
      * error (pressure too high) must increase the output (close further). */
     pressure_pid.p_term = -pressure_pid.p_term;
     pressure_pid.i_term = -pressure_pid.i_term;
+    pressure_pid.d_term = -pressure_pid.d_term;
 
-    float delta = pressure_pid.p_term + pressure_pid.i_term;
+    float delta = pressure_pid.p_term + pressure_pid.i_term + pressure_pid.d_term;
     bool  pinned_high = (pressure_pid.y_out >= VALVE_POS_MAX) && (delta > 0.0f);
     bool  pinned_low  = (pressure_pid.y_out <= VALVE_POS_MIN) && (delta < 0.0f);
     if (pinned_high || pinned_low) {
@@ -92,8 +96,7 @@ void pressure_pid_update(void)
         epid_util_ilim(&pressure_pid, -PRESSURE_PID_I_LIMIT, PRESSURE_PID_I_LIMIT);
     }
 
-    /* y[k] = y[k-1] + P[k] + I[k], clamped to the valve's physical range. */
-    epid_pi_sum(&pressure_pid, VALVE_POS_MIN, VALVE_POS_MAX);
+    epid_pid_sum(&pressure_pid, VALVE_POS_MIN, VALVE_POS_MAX);
 
     ESP_LOGI(TAG,
              "pid: pressure=%.2f filt=%.2f target=%.2f error=%.2f p=%.2f i=%.2f d=%.2f y_out=%.2f current_pose=%.2f%s",

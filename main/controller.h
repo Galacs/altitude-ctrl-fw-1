@@ -9,7 +9,7 @@
 
 #define PRESSURE_PID_KP                2.0f
 #define PRESSURE_PID_TI                0.1f
-#define PRESSURE_PID_TD                0.0f // No effect
+#define PRESSURE_PID_TD                1.5f
 #define PRESSURE_PID_I_LIMIT           30.0f
 #define PRESSURE_DEADZONE              0.1f
 
